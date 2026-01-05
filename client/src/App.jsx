@@ -12,11 +12,23 @@ import AuthLayout from "./pages/auth/AuthLayout.jsx";
 import SignIn from "./pages/auth/SignIn.jsx";
 import SignUp from "./pages/auth/SignUp.jsx";
 import Verification from "./pages/auth/Verification.jsx";
+// import Layout from "./components/layout/Layout.jsx";
+import LandingPage from "./pages/landing/LandingPage.jsx";
+// import About from "./pages/landing/About.jsx";
+import Services from "./pages/services/Services.jsx";
+import PublicLayout from "./components/layout/PublicLayout.jsx";
+import WorkspaceLayout from "./pages/workSpace/WorkspaceLayout.jsx";
+import ClassesPage from "./pages/workspace/classes/ClassesPage.jsx";
+import ClassDetailPage from "./pages/workspace/classes/classDetail/ClassDetailPage.jsx";
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Navigate to="/auth/signin" replace />,
+        element: <PublicLayout />,
+        children: [
+            { index: true, element: <LandingPage /> },
+            { path: "services", element: <Services /> },
+        ],
     },
     {
         path: "/auth",
@@ -27,10 +39,17 @@ const router = createBrowserRouter([
             { path: "verification", element: <Verification /> },
         ],
     },
-    // fallback
     {
-        path: "*",
-        element: <Navigate to="/auth/signin" replace />,
+        element: <WorkspaceLayout />,
+        children: [
+            {
+                path: "/workspace",
+                children: [
+                    { path: "classes", element: <ClassesPage /> },
+                    { path: "classes/:classId", element: <ClassDetailPage /> },
+                ],
+            },
+        ],
     },
 ]);
 

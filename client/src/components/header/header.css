@@ -1,0 +1,120 @@
+/* ---------- Container ---------- */
+.lp-container {
+    width: min(1100px, 92%);
+    margin: 0 auto;
+}
+
+/* ---------- Header ---------- */
+.lp-header {
+    position: sticky;
+    z-index: 20;
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.lp-nav {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.lp-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+}
+
+.lp-brand-badge {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    color: var(--tertiary-color);
+    font-weight: 900;
+}
+
+.lp-brand-badge:hover {
+    background: var(--light-purple);
+}
+
+.lp-brand-text {
+    font-size: 22px;
+    letter-spacing: 2.5px;
+}
+
+.lp-brand-text:hover {
+    color: var(--tertiary-color);
+    font-weight: 900;
+}
+
+.lp-links {
+    position: relative;
+    padding: 6px 30px;
+    font-size: 16px;
+    text-decoration: none;
+    color: var(--text-color-dark);
+    border-radius: 999px;
+    transition: color 0.25s ease, opacity 0.25s ease, transform 0.25s ease;
+}
+
+.lp-links::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 80%;
+    height: 2px;
+    border-radius: 999px;
+    background: linear-gradient(
+        90deg,
+        var(--secondary-color),
+        var(--tertiary-color)
+    );
+    /* transform: translateX(-50%) scaleX(0); */
+    /* transform-origin: center; */
+    opacity: 0;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.lp-links:hover {
+    opacity: 1;
+    color: var(--hover-btn);
+    transform: translateY(-3px) scale(1);
+}
+
+.lp-links:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
+}
+
+.lp-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.lp-action-btn {
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: linear-gradient(
+        90deg,
+        var(--primary-color),
+        var(--secondary-color)
+    );
+    color: white;
+    font-weight: 800;
+    font-size: 13px;
+}
+
+.lp-action-btn:hover {
+    transform: translateY(-3px) scale(1);
+    background: linear-gradient(
+        90deg,
+        var(--tertiary-color),
+        var(--secondary-color)
+    );
+}

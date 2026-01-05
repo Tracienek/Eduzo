@@ -23,15 +23,19 @@ export default function Vertification() {
             <form className="auth-form" onSubmit={onSubmit}>
                 <div className="auth-field">
                     <label className="auth-label">Verification Code</label>
-                    <input
-                        className="auth-input"
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="e.g. 123456"
-                        value={code}
-                        onChange={(e) => setCode(e.target.value)}
-                        required
-                    />
+                    <div className="auth-input-wrap">
+                        <span className="auth-input-icon">
+                            <i className="fa-solid fa-key"></i>
+                        </span>
+                        <input
+                            type="text"
+                            name="code"
+                            placeholder="Enter verification code"
+                            value={code}
+                            onChange={(e) => setCode(e.target.value)}
+                            className="auth-input"
+                        />
+                    </div>
                 </div>
 
                 <button

@@ -8,14 +8,14 @@
    CSS Variables (Purple Theme)
 ================================ */
 :root {
-    --primary-color: #8256e8;
-    --secondary-color: #DDC3F7;
-    --tertiary-color: #7E3DB7;
-    --light-purple: #e4d9ef;
+    --primary-color: #9854dc;
+    --secondary-color: #e2ccf8;
+    --tertiary-color: #7545a5;
+    --light-purple: #f6f0fe;
 
     /* Button */
     --btn-color: rgba(139, 92, 246, 0.16);
-    --hover-btn: #6f2ae7;
+    --hover-btn: #5211c2;
 
     /* Text */
     --text-color-dark: #1c1c1c;
@@ -41,7 +41,7 @@
 ================================ */
 a,
 a:visited {
-    color: inherit;
+    // color: inherit;
     text-decoration: none;
 }
 

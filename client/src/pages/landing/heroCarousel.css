@@ -1,0 +1,64 @@
+.hc {
+    position: relative;
+    width: 100%;
+    max-width: 860px;
+    margin: 1px auto 18px;
+    overflow: hidden;
+    isolation: isolate;
+    border-radius: 14px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+}
+
+.hc-track {
+    display: flex;
+    width: 100%;
+    transition: transform 450ms ease;
+}
+
+.hc-slide {
+    min-width: 100%;
+    height: 320px;
+}
+
+.hc-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.hc-dots {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.hc-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+
+    background: var(--secondary-color);
+    box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.35);
+    opacity: 1;
+    transition: all 0.25s ease;
+}
+
+.hc-dot:hover {
+    background: var(--hover-btn);
+}
+
+.hc-dot.is-active {
+    background: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--light-purple);
+    transform: scale(1.15);
+}
