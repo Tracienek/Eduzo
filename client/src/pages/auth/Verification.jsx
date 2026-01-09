@@ -1,18 +1,15 @@
+// src/page/auth/Verification.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import AuthLayout from "./AuthLayout.jsx";
 import "./auth.css";
 
-export default function Vertification() {
+export default function Verification() {
     const nav = useNavigate();
     const [code, setCode] = useState("");
 
     const onSubmit = (e) => {
         e.preventDefault();
-
-        // TODO: verify OTP/email code
-        // demo: sau verify chuyển sang dashboard
-        nav("/teacher/dashboard");
+        nav("/workspace");
     };
 
     return (

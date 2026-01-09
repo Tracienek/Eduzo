@@ -1,8 +1,13 @@
+// WorkspaceTopBar.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./WorkspaceTopBar.css";
 import { useAuth } from "../../context/auth/AuthContext";
 import { apiUtils } from "../../utils/newRequest";
+
+// NOTE: WorkspaceTopBar KHÔNG dùng socket trực tiếp.
+// Socket (nếu có) nằm trong AuthContext.jsx.
+// Nếu bạn đang bị /socket.io 404 hoặc web xoay liên tục, hãy tắt socket ở AuthContext.
 
 export default function WorkspaceTopBar() {
     const { userInfo, logout } = useAuth();
@@ -119,6 +124,17 @@ export default function WorkspaceTopBar() {
         return () => document.removeEventListener("mousedown", close);
     }, []);
 
+    /* ============ AVATAR FIX (NO FLICKER) ============ */
+    // Lý do avatar chớp nháy: src bị set về URL lỗi mỗi render,
+    // onError lại set placeholder, rồi render lại -> loop.
+    // Fix: dùng state avatarSrc và chỉ fallback 1 lần.
+    const FALLBACK_AVATAR = "https://via.placeholder.com/40";
+    const [avatarSrc, setAvatarSrc] = useState(FALLBACK_AVATAR);
+
+    useEffect(() => {
+        setAvatarSrc(userInfo?.avatar || FALLBACK_AVATAR);
+    }, [userInfo?.avatar]);
+
     return (
         <header className="workspace-topbar">
             {/* SEARCH */}
@@ -233,19 +249,14 @@ export default function WorkspaceTopBar() {
                     >
                         <img
                             className="workspace-user-avatar"
-                            src={
-                                userInfo?.avatar ||
-                                "https://via.placeholder.com/40"
-                            }
-                            onError={(e) =>
-                                (e.currentTarget.src =
-                                    "https://via.placeholder.com/40")
-                            }
+                            src={avatarSrc}
+                            onError={() => setAvatarSrc(FALLBACK_AVATAR)}
                             alt={userInfo?.fullName || "User"}
                         />
                         <span className="workspace-user-name">
                             {userInfo?.fullName || "User"}
                         </span>
+
                         <svg
                             className={`workspace-user-caret ${
                                 userOpen ? "open" : ""

@@ -40,15 +40,14 @@ const router = createBrowserRouter([
         ],
     },
     {
+        path: "/workspace",
         element: <WorkspaceLayout />,
         children: [
-            {
-                path: "/workspace",
-                children: [
-                    { path: "classes", element: <ClassesPage /> },
-                    { path: "classes/:classId", element: <ClassDetailPage /> },
-                ],
-            },
+            // ✅ when visiting /workspace, go somewhere real
+            { index: true, element: <Navigate to="classes" replace /> },
+
+            { path: "classes", element: <ClassesPage /> },
+            { path: "classes/:classId", element: <ClassDetailPage /> },
         ],
     },
 ]);

@@ -1,4 +1,4 @@
-// src/components/Auth/AuthLayout.jsx
+// src/page/auth/AuthLayout.jsx
 import { Outlet } from "react-router-dom";
 import "../../pages/auth/auth.css";
 import logo from "../../assets/images/logo.png";

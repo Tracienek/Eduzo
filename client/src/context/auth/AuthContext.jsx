@@ -1,7 +1,7 @@
 // context/AuthContext.jsx
 import { createContext, useContext, useState, useEffect } from "react";
 import Cookies from "js-cookie";
-import socketIOClient from "socket.io-client";
+// import socketIOClient from "socket.io-client";
 
 // Utils
 import { newRequest, apiUtils } from "../../utils/newRequest";
@@ -29,33 +29,33 @@ export const AuthProvider = ({ children }) => {
     const [userInfo, setUserInfo] = useState(null);
     const [myCharacters, setMyCharacters] = useState([]);
     const [characterInfo, setCharacterInfo] = useState(null);
-    const [onlineUsers, setOnlineUsers] = useState([]);
+    // const [onlineUsers, setOnlineUsers] = useState([]);
 
     // Loading state
     const [loading, setLoading] = useState(true);
 
     // Socket
-    const [socket, setSocket] = useState(null);
+    // const [socket, setSocket] = useState(null);
 
     // --------------------------------------------------
     // 1) Setup socket connection on mount
     // --------------------------------------------------
-    useEffect(() => {
-        const newSocket = socketIOClient(
-            import.meta.env.VITE_ENV === "production"
-                ? import.meta.env.VITE_SERVER_ORIGIN
-                : import.meta.env.VITE_SERVER_LOCAL_ORIGIN
-        );
+    // useEffect(() => {
+    //     const newSocket = socketIOClient(
+    //         import.meta.env.VITE_ENV === "production"
+    //             ? import.meta.env.VITE_SERVER_ORIGIN
+    //             : import.meta.env.VITE_SERVER_LOCAL_ORIGIN
+    //     );
 
-        setSocket(newSocket);
-        return () => newSocket.disconnect();
-    }, []);
+    //     setSocket(newSocket);
+    //     return () => newSocket.disconnect();
+    // }, []);
 
-    useEffect(() => {
-        if (!socket) return;
-        socket.on("getUsers", (users) => setOnlineUsers(users));
-        return () => socket.off("getUsers");
-    }, [socket]);
+    // useEffect(() => {
+    //     if (!socket) return;
+    //     socket.on("getUsers", (users) => setOnlineUsers(users));
+    //     return () => socket.off("getUsers");
+    // }, [socket]);
 
     // --------------------------------------------------
     // 2) Fetch userInfo on mount
@@ -79,12 +79,12 @@ export const AuthProvider = ({ children }) => {
         loadUserMe();
     }, []);
 
-    // Add socket user after login load
-    useEffect(() => {
-        if (socket && userInfo?._id) {
-            socket.emit("addUser", userInfo._id);
-        }
-    }, [socket, userInfo]);
+    // // Add socket user after login load
+    // useEffect(() => {
+    //     if (socket && userInfo?._id) {
+    //         socket.emit("addUser", userInfo._id);
+    //     }
+    // }, [socket, userInfo]);
 
     // --------------------------------------------------
     // 4) Login & Logout
@@ -151,8 +151,8 @@ export const AuthProvider = ({ children }) => {
         myCharacters,
 
         // Socket
-        socket,
-        onlineUsers,
+        // socket,
+        // onlineUsers,
     };
 
     return (

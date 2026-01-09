@@ -42,6 +42,36 @@
     font-weight: 700;
 }
 
+.cd-btn-save {
+    width: 80px;
+    height: 36px;
+    padding: 0 12px;
+    background: var(--secondary-color);
+    border-radius: 10px;
+    border: 1px solid #e6e2ff;
+    color: #000;
+}
+
+.cd-btn-save:hover {
+    background-color: var(--tertiary-color);
+    color: white;
+}
+
+.cd-btn-cancel {
+    width: 80px;
+    height: 36px;
+    padding: 0 12px;
+    background: #b4b2b2;
+    border-radius: 10px;
+    border: 1px solid #e6e2ff;
+    color: #000;
+}
+
+.cd-btn-cancel:hover {
+    background-color: var(--muted);
+    color: white;
+}
+
 /* Stats */
 .cd-stats {
     display: flex;

@@ -1,11 +1,17 @@
+// src/page/auth/SignUp.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import "./Auth.css";
+import { apiUtils } from "../../utils/newRequest"; // chỉnh path đúng project bạn
+import "./auth.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+
+const unwrap = (res) => {
+    const root = res?.data ?? res;
+    return root?.metadata ?? root?.data ?? root;
+};
 
 export default function SignUp() {
     const navigate = useNavigate();
-
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -15,14 +21,13 @@ export default function SignUp() {
         fullName: "",
         password: "",
         confirmPassword: "",
-        centers: "",
+        centers: "", // nếu BE cần
     });
 
     const onChange = (e) => {
         const { name, value } = e.target;
-
-        setInputs((prev) => ({ ...prev, [name]: value }));
-        setErrors((prev) => ({ ...prev, [name]: "" }));
+        setInputs((p) => ({ ...p, [name]: value }));
+        setErrors((p) => ({ ...p, [name]: "", serverError: "" }));
     };
 
     const validateInputs = () => {
@@ -35,8 +40,11 @@ export default function SignUp() {
             errs.confirmPassword = "Please confirm your password";
         else if (inputs.confirmPassword !== inputs.password)
             errs.confirmPassword = "Passwords do not match";
-        if (!inputs.centers.trim())
+
+        // nếu BE yêu cầu centers thì giữ, không thì xoá đoạn này + field
+        if (!inputs.centers?.toString().trim())
             errs.centers = "Please select centers count";
+
         return errs;
     };
 
@@ -45,7 +53,7 @@ export default function SignUp() {
         setIsSubmitting(true);
 
         const validationErrors = validateInputs();
-        if (Object.keys(validationErrors).length > 0) {
+        if (Object.keys(validationErrors).length) {
             setErrors(validationErrors);
             setIsSubmitting(false);
             return;
@@ -53,19 +61,30 @@ export default function SignUp() {
 
         try {
             const payload = {
-                email: inputs.email,
-                fullName: inputs.fullName,
+                email: inputs.email.trim().toLowerCase(),
+                fullName: inputs.fullName.trim(),
                 password: inputs.password,
                 centers: inputs.centers,
             };
 
-            // const res = await apiUtils.post("/auth/signUp", payload);
+            const res = await apiUtils.post("/auth/signUp", payload);
+            const data = unwrap(res);
 
-            // demo điều hướng:
-            navigate("/auth/verification", { state: { email: inputs.email } });
+            // nếu BE trả OTP flow:
+            // navigate("/auth/verification", { state: { email: inputs.email } });
+
+            // nếu BE sign up xong cho login luôn:
+            // const token = data?.accessToken || data?.token;
+            // if (token) localStorage.setItem("token", token);
+
+            // mặc định: về sign-in
+            navigate("/auth/signIn");
         } catch (err) {
             setErrors({
-                serverError: "Registration failed. Try again.",
+                serverError:
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "Registration failed. Try again.",
             });
         } finally {
             setIsSubmitting(false);
@@ -82,7 +101,7 @@ export default function SignUp() {
                     <label className="auth-label">Full Name</label>
                     <div className="auth-input-wrap">
                         <span className="auth-input-icon">
-                            <i className="fa-solid fa-user"></i>
+                            <i className="fa-solid fa-user" />
                         </span>
                         <input
                             type="text"
@@ -106,7 +125,7 @@ export default function SignUp() {
                     <label className="auth-label">Email</label>
                     <div className="auth-input-wrap">
                         <span className="auth-input-icon">
-                            <i className="fa-solid fa-envelope"></i>
+                            <i className="fa-solid fa-envelope" />
                         </span>
                         <input
                             type="email"
@@ -117,9 +136,32 @@ export default function SignUp() {
                             className="auth-input"
                         />
                     </div>
-
                     <p className={`auth-error ${errors.email ? "show" : ""}`}>
                         {errors.email}
+                    </p>
+                </div>
+
+                {/* centers: nếu BE cần */}
+                <div className="auth-field">
+                    <label className="auth-label">Centers</label>
+                    <div className="auth-input-wrap">
+                        <span className="auth-input-icon">
+                            <i className="fa-solid fa-building" />
+                        </span>
+                        <select
+                            name="centers"
+                            value={inputs.centers}
+                            onChange={onChange}
+                            className="auth-input"
+                        >
+                            <option value="">Select centers count</option>
+                            <option value="1">1 center</option>
+                            <option value="2">2 centers</option>
+                            <option value="3">3 centers</option>
+                        </select>
+                    </div>
+                    <p className={`auth-error ${errors.centers ? "show" : ""}`}>
+                        {errors.centers}
                     </p>
                 </div>
 
@@ -127,7 +169,7 @@ export default function SignUp() {
                     <label className="auth-label">Password</label>
                     <div className="auth-input-wrap">
                         <span className="auth-input-icon">
-                            <i className="fa-solid fa-lock"></i>
+                            <i className="fa-solid fa-lock" />
                         </span>
                         <input
                             type={showPassword ? "text" : "password"}
@@ -141,16 +183,15 @@ export default function SignUp() {
                             type="button"
                             className="auth-eye-btn"
                             onClick={() => setShowPassword((v) => !v)}
+                            aria-label="Toggle password visibility"
                         >
-                            {/* nếu regular không hiện thì đổi sang fa-solid */}
                             {showPassword ? (
-                                <i className="fa-solid fa-eye-slash"></i>
+                                <i className="fa-solid fa-eye-slash" />
                             ) : (
-                                <i className="fa-solid fa-eye"></i>
+                                <i className="fa-solid fa-eye" />
                             )}
                         </button>
                     </div>
-
                     <p
                         className={`auth-error ${
                             errors.password ? "show" : ""
@@ -164,7 +205,7 @@ export default function SignUp() {
                     <label className="auth-label">Confirm Password</label>
                     <div className="auth-input-wrap">
                         <span className="auth-input-icon">
-                            <i className="fa-solid fa-lock"></i>
+                            <i className="fa-solid fa-lock" />
                         </span>
                         <input
                             type={showPassword ? "text" : "password"}
@@ -174,17 +215,6 @@ export default function SignUp() {
                             onChange={onChange}
                             className="auth-input"
                         />
-                        <button
-                            type="button"
-                            className="auth-eye-btn"
-                            onClick={() => setShowPassword((v) => !v)}
-                        >
-                            {showPassword ? (
-                                <i className="fa-solid fa-eye-slash"></i>
-                            ) : (
-                                <i className="fa-solid fa-eye"></i>
-                            )}
-                        </button>
                     </div>
                     <p
                         className={`auth-error ${
@@ -194,6 +224,10 @@ export default function SignUp() {
                         {errors.confirmPassword}
                     </p>
                 </div>
+
+                {errors.serverError && (
+                    <p className="auth-error show">{errors.serverError}</p>
+                )}
 
                 <button
                     className="auth-btn"
@@ -205,7 +239,7 @@ export default function SignUp() {
 
                 <div className="auth-footer">
                     <span>Already have an account? </span>
-                    <Link className="auth-link" to="/auth/sign-in">
+                    <Link className="auth-link" to="/auth/signIn">
                         Sign in
                     </Link>
                 </div>

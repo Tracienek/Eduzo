@@ -50,10 +50,10 @@ const Header = () => {
                     </nav>
 
                     <div className="lp-actions">
-                        <Link className="lp-links" to="/auth/sign-in">
+                        <Link className="lp-links" to="/auth/signin">
                             Sign in
                         </Link>
-                        <Link className="lp-action-btn" to="/auth/sign-up">
+                        <Link className="lp-action-btn" to="/auth/signup">
                             Start free trial
                         </Link>
                     </div>

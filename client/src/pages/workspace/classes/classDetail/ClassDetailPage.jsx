@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState, Fragment } from "react";
-import { useParams } from "react-router-dom";
+// src/pages/workspace/classes/classDetail/ClassDetailPage.jsx
+import { useEffect, useMemo, useRef, useState, Fragment } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../../utils/newRequest";
 import "./ClassDetailPage.css";
+import CreateStudent from "../createModal/CreateStudent";
 
 /** ---------- helpers ---------- **/
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -42,26 +44,19 @@ function parseWeekdays(scheduleText = "") {
     return days.length ? Array.from(new Set(days)) : [1, 3, 5];
 }
 
-// Lấy N buổi học từ một ngày bắt đầu (filter theo ngày)
 function getNextSessionDatesFromDate({ startDateISO, weekdays, count = 3 }) {
-    // startDateISO: "YYYY-MM-DD"
     const [y, m, d] = startDateISO.split("-").map(Number);
-    const start = new Date(y, m - 1, d);
+    const cur = new Date(y, m - 1, d);
 
     const results = [];
-    for (
-        let cur = new Date(start);
-        results.length < count;
-        cur.setDate(cur.getDate() + 1)
-    ) {
+    while (results.length < count) {
         if (weekdays.includes(cur.getDay())) results.push(new Date(cur));
+        cur.setDate(cur.getDate() + 1);
     }
     return results;
 }
 
-/** convert helpers */
 const isoToDMY = (iso) => {
-    // iso: YYYY-MM-DD
     if (!iso) return "";
     const [y, m, d] = iso.split("-");
     if (!y || !m || !d) return "";
@@ -69,7 +64,6 @@ const isoToDMY = (iso) => {
 };
 
 const dmyToISO = (dmy) => {
-    // dmy: DD/MM/YYYY
     const m = dmy.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
     if (!m) return null;
     const [, dd, mm, yyyy] = m;
@@ -77,39 +71,42 @@ const dmyToISO = (dmy) => {
 };
 
 const normalizeDMYTyping = (v) => {
-    // only digits and /
     let s = v.replace(/[^\d/]/g, "").slice(0, 10);
-    // auto add slash after dd and mm
     s = s.replace(/^(\d{2})(\d)/, "$1/$2");
     s = s.replace(/^(\d{2}\/\d{2})(\d)/, "$1/$2");
     return s;
 };
 
-// // helpers (đặt gần các helper khác)
-// const DAY_NAME = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_NAME = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+];
 
-// const extractTimeFromSchedule = (scheduleText = "") => {
-//   // Ví dụ: "Mon, Wed, Fri - 9:00 AM" -> "9:00 AM"
-//   const parts = scheduleText.split("-").map(s => s.trim());
-//   return parts.length >= 2 ? parts.slice(1).join("-").trim() : "";
-// };
+const extractTimeFromSchedule = (scheduleText = "") => {
+    const parts = scheduleText.split("-").map((s) => s.trim());
+    return parts.length >= 2 ? parts.slice(1).join("-").trim() : "";
+};
 
-// ...
-
-// // trong component, trước return
-// const nextSession = sessionDates?.[0] || null;
-// const nextSessionDayLabel = nextSession ? DAY_NAME[nextSession.getDay()] : "";
-// const nextSessionTimeLabel = extractTimeFromSchedule(cls?.scheduleText || "");
-// const nextSessionSubLabel = nextSession
-//   ? `${fmtDMY(nextSession)}${nextSessionTimeLabel ? `, ${nextSessionTimeLabel}` : ""}`
-//   : "—";
+const toLocalISODate = (d) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+};
 
 export default function ClassDetailPage() {
     const { classId } = useParams();
+    const navigate = useNavigate();
+
+    const [openStudent, setOpenStudent] = useState(false);
     const [loading, setLoading] = useState(true);
     const [cls, setCls] = useState(null);
 
-    // filter theo ngày (mặc định: hôm nay)
     const [startDate, setStartDate] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(
@@ -117,17 +114,23 @@ export default function ClassDetailPage() {
         )}`;
     });
 
-    // UI hiển thị DD/MM/YYYY
-    const [displayDate, setDisplayDate] = useState(() =>
-        isoToDMY(
-            `${new Date().getFullYear()}-${pad2(
-                new Date().getMonth() + 1
-            )}-${pad2(new Date().getDate())}`
-        )
-    );
+    const [displayDate, setDisplayDate] = useState(() => isoToDMY(startDate));
 
-    // local state tick checkbox
     const [checkState, setCheckState] = useState({});
+
+    const [isEditingAttendance, setIsEditingAttendance] = useState(false);
+
+    const snapshotRef = useRef(null);
+
+    const [pendingAttendance, setPendingAttendance] = useState({});
+
+    const ensureStudentState = (studentId, base) => {
+        if (base[studentId]) return base;
+        return {
+            ...base,
+            [studentId]: { attendance: {}, homework: {}, tuition: false },
+        };
+    };
 
     useEffect(() => {
         let alive = true;
@@ -171,7 +174,6 @@ export default function ClassDetailPage() {
         };
     }, [classId]);
 
-    // nếu startDate thay đổi (từ picker), đồng bộ displayDate
     useEffect(() => {
         setDisplayDate(isoToDMY(startDate));
     }, [startDate]);
@@ -181,7 +183,6 @@ export default function ClassDetailPage() {
         [cls?.scheduleText]
     );
 
-    // 3 buổi học kế tiếp từ ngày filter
     const sessionDates = useMemo(() => {
         return getNextSessionDatesFromDate({
             startDateISO: startDate,
@@ -190,20 +191,16 @@ export default function ClassDetailPage() {
         });
     }, [startDate, weekdays]);
 
-    // key YYYY-MM-DD để lưu checkbox
     const dateKeys = useMemo(
-        () => sessionDates.map((d) => d.toISOString().slice(0, 10)),
+        () => sessionDates.map(toLocalISODate),
         [sessionDates]
     );
 
-    const toggle = (studentId, type, dateKey, value) => {
+    const toggleLocal = (studentId, type, dateKey, value) => {
         setCheckState((prev) => {
-            const cur = prev[studentId] || {
-                attendance: {},
-                homework: {},
-                tuition: false,
-            };
-            const next = { ...prev };
+            let next = { ...prev };
+            next = ensureStudentState(studentId, next);
+            const cur = next[studentId];
 
             if (type === "tuition") {
                 next[studentId] = { ...cur, tuition: value };
@@ -221,8 +218,81 @@ export default function ClassDetailPage() {
         });
     };
 
+    // enter draft mode (attendance)
+    const enterAttendanceEditMode = () => {
+        if (isEditingAttendance) return;
+        snapshotRef.current = JSON.parse(JSON.stringify(checkState)); // deep copy for cancel
+        setPendingAttendance({});
+        setIsEditingAttendance(true);
+    };
+
+    const exitAttendanceEditMode = () => {
+        setIsEditingAttendance(false);
+        setPendingAttendance({});
+        snapshotRef.current = null;
+    };
+
+    const markAttendancePending = (studentId, dateKey, value) => {
+        setPendingAttendance((prev) => {
+            const cur = prev[studentId] || {};
+            return {
+                ...prev,
+                [studentId]: { ...cur, [dateKey]: value },
+            };
+        });
+    };
+
+    const saveAttendance = async () => {
+        // build list
+        const changes = [];
+        Object.entries(pendingAttendance).forEach(([studentId, m]) => {
+            Object.entries(m || {}).forEach(([dateKey, value]) => {
+                changes.push({ studentId, dateKey, attendance: !!value });
+            });
+        });
+
+        if (!changes.length) {
+            // nothing to save, just exit
+            exitAttendanceEditMode();
+            return;
+        }
+
+        try {
+            await apiUtils.patch(`/classes/${classId}/attendance/bulk`, {
+                changes,
+            });
+
+            exitAttendanceEditMode();
+        } catch (err) {
+            console.error(err);
+            alert(
+                err?.response?.data?.message ||
+                    "Save attendance failed. Please try again."
+            );
+        }
+    };
+
+    const cancelAttendance = () => {
+        const snap = snapshotRef.current;
+        if (snap) setCheckState(snap);
+        exitAttendanceEditMode();
+    };
+
     if (loading) return <div className="cd-muted">Loading...</div>;
     if (!cls) return <div className="cd-muted">Class not found</div>;
+
+    const nextSession = sessionDates?.[0] || null;
+    const nextSessionDayLabel = nextSession
+        ? DAY_NAME[nextSession.getDay()]
+        : "";
+    const nextSessionTimeLabel = extractTimeFromSchedule(
+        cls?.scheduleText || ""
+    );
+    const nextSessionSubLabel = nextSession
+        ? `${fmtDMY(nextSession)}${
+              nextSessionTimeLabel ? `, ${nextSessionTimeLabel}` : ""
+          }`
+        : "—";
 
     return (
         <div className="cd-wrap">
@@ -234,10 +304,75 @@ export default function ClassDetailPage() {
                     {cls.scheduleText || "Mon, Wed, Fri - 9:00 AM"}
                 </div>
 
-                <button className="cd-btn" type="button">
-                    + Student
-                </button>
+                <div style={{ display: "flex", gap: 10 }}>
+                    <button
+                        className="cd-btn"
+                        type="button"
+                        onClick={() =>
+                            navigate(`/workspace/classes/${classId}/attendance`)
+                        }
+                        title="View full attendance"
+                    >
+                        View full attendance
+                    </button>
+
+                    <button
+                        className="cd-btn"
+                        type="button"
+                        onClick={() => setOpenStudent(true)}
+                    >
+                        + Student
+                    </button>
+                </div>
             </div>
+
+            <CreateStudent
+                open={openStudent}
+                onClose={() => setOpenStudent(false)}
+                classId={classId}
+                onCreated={(createdStudent) => {
+                    if (!createdStudent) return;
+
+                    setCls((prev) => {
+                        if (!prev) return prev;
+                        const nextStudents = [
+                            ...(prev.students || []),
+                            createdStudent,
+                        ];
+                        return {
+                            ...prev,
+                            students: nextStudents,
+                            totalStudents:
+                                prev.totalStudents ??
+                                prev.studentCount ??
+                                nextStudents.length,
+                            studentCount:
+                                prev.studentCount ??
+                                prev.totalStudents ??
+                                nextStudents.length,
+                        };
+                    });
+
+                    const id =
+                        createdStudent._id ||
+                        createdStudent.id ||
+                        createdStudent.email ||
+                        createdStudent.fullName ||
+                        createdStudent.name ||
+                        String(Date.now());
+
+                    setCheckState((prev) => ({
+                        ...prev,
+                        [id]: {
+                            attendance: {},
+                            homework: {},
+                            tuition:
+                                !!createdStudent.tuitionPaid ||
+                                !!createdStudent.tuition,
+                        },
+                    }));
+                }}
+            />
 
             <div className="cd-stats">
                 <div className="cd-stat">
@@ -251,20 +386,10 @@ export default function ClassDetailPage() {
                 <div className="cd-stat">
                     <div className="cd-stat-label">Next Session</div>
                     <div className="cd-stat-value">
-                        {cls.nextSessionDay || "Monday"}
-                    </div>
-                    <div className="cd-stat-sub">
-                        {cls.nextSessionTime || "Dec 30, 9:00 AM"}
-                    </div>
-                </div>
-
-                {/* <div className="cd-stat">
-                    <div className="cd-stat-label">Next Session</div>
-                    <div className="cd-stat-value">
                         {nextSession ? nextSessionDayLabel : "—"}
                     </div>
                     <div className="cd-stat-sub">{nextSessionSubLabel}</div>
-                </div> */}
+                </div>
             </div>
 
             <div className="cd-section">
@@ -276,7 +401,6 @@ export default function ClassDetailPage() {
                             <span className="cd-date-label">Date</span>
 
                             <div className="cd-date-input">
-                                {/* TEXT hiển thị DD/MM/YYYY */}
                                 <input
                                     className="cd-date-text"
                                     type="text"
@@ -293,14 +417,12 @@ export default function ClassDetailPage() {
                                         if (iso) setStartDate(iso);
                                     }}
                                     onBlur={() => {
-                                        // nếu nhập sai -> revert về startDate hiện tại
                                         const iso = dmyToISO(displayDate);
                                         if (!iso)
                                             setDisplayDate(isoToDMY(startDate));
                                     }}
                                 />
 
-                                {/* DATE thật để mở calendar + giữ value ISO */}
                                 <input
                                     id="datePicker"
                                     className="cd-real-date"
@@ -311,7 +433,6 @@ export default function ClassDetailPage() {
                                     }
                                 />
 
-                                {/* icon mở picker */}
                                 <button
                                     type="button"
                                     className="cd-date-icon-btn"
@@ -353,7 +474,6 @@ export default function ClassDetailPage() {
                                 <th className="cd-col-no">No</th>
                                 <th className="cd-col-name">Name</th>
 
-                                {/* xen kẽ: Date | Homework */}
                                 {sessionDates.map((d, i) => (
                                     <Fragment key={`pair-head-${i}`}>
                                         <th className="cd-col-date">
@@ -395,18 +515,29 @@ export default function ClassDetailPage() {
                                                                 studentId
                                                             ]?.attendance?.[dk]
                                                         }
-                                                        onChange={(e) =>
-                                                            toggle(
+                                                        onChange={(e) => {
+                                                            enterAttendanceEditMode();
+
+                                                            const val =
+                                                                e.target
+                                                                    .checked;
+
+                                                            toggleLocal(
                                                                 studentId,
                                                                 "attendance",
                                                                 dk,
-                                                                e.target.checked
-                                                            )
-                                                        }
+                                                                val
+                                                            );
+
+                                                            markAttendancePending(
+                                                                studentId,
+                                                                dk,
+                                                                val
+                                                            );
+                                                        }}
                                                     />
                                                 </td>
 
-                                                {/* Homework */}
                                                 <td className="cd-center">
                                                     <input
                                                         type="checkbox"
@@ -416,7 +547,7 @@ export default function ClassDetailPage() {
                                                             ]?.homework?.[dk]
                                                         }
                                                         onChange={(e) =>
-                                                            toggle(
+                                                            toggleLocal(
                                                                 studentId,
                                                                 "homework",
                                                                 dk,
@@ -428,7 +559,6 @@ export default function ClassDetailPage() {
                                             </Fragment>
                                         ))}
 
-                                        {/* Tuition */}
                                         <td className="cd-center">
                                             <input
                                                 type="checkbox"
@@ -437,7 +567,7 @@ export default function ClassDetailPage() {
                                                         ?.tuition
                                                 }
                                                 onChange={(e) =>
-                                                    toggle(
+                                                    toggleLocal(
                                                         studentId,
                                                         "tuition",
                                                         null,
@@ -465,6 +595,34 @@ export default function ClassDetailPage() {
                         </tbody>
                     </table>
                 </div>
+
+                {isEditingAttendance && (
+                    <div
+                        className="cd-actions"
+                        style={{
+                            marginTop: 14,
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 10,
+                        }}
+                    >
+                        <button
+                            type="button"
+                            className="cd-btn-cancel"
+                            onClick={cancelAttendance}
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="button"
+                            className="cd-btn-save"
+                            onClick={saveAttendance}
+                        >
+                            Save
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
