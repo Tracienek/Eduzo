@@ -1,7 +1,7 @@
 /* pages/workspace/classes/ClassDetailPage.css */
 
 .cd-wrap {
-    background: #f6efff;
+    background: var(--bg);
     border-radius: 16px;
     padding: 18px;
     min-height: calc(100vh - 64px - 32px);
@@ -21,9 +21,10 @@
 }
 
 .cd-title {
-    font-size: 28px;
+    font-size: 36px;
     font-weight: 900;
-    color: #2f2a4a;
+    color: var(--tertiary-color);
+    padding-left: 6px;
 }
 
 .cd-schedule {
@@ -42,6 +43,15 @@
     font-weight: 700;
 }
 
+.cd-btn:hover {
+    transform: translateY(-3px) scale(1);
+    background: linear-gradient(
+        90deg,
+        var(--tertiary-color),
+        var(--secondary-color)
+    );
+}
+
 .cd-btn-save {
     width: 80px;
     height: 36px;
@@ -53,8 +63,12 @@
 }
 
 .cd-btn-save:hover {
-    background-color: var(--tertiary-color);
-    color: white;
+    transform: translateY(-3px) scale(1);
+    background: linear-gradient(
+        90deg,
+        var(--tertiary-color),
+        var(--secondary-color)
+    );
 }
 
 .cd-btn-cancel {
@@ -68,8 +82,8 @@
 }
 
 .cd-btn-cancel:hover {
-    background-color: var(--muted);
-    color: white;
+    transform: translateY(-3px) scale(1);
+    background: linear-gradient(90deg, var(--muted), var(#f8f7f7));
 }
 
 /* Stats */
@@ -100,7 +114,7 @@
 }
 
 .cd-stat-sub {
-    margin-top: 2px;
+    margin-top: 6px;
     color: #6b7280;
     font-size: 12px;
 }
@@ -259,6 +273,61 @@
     width: 16px;
     height: 16px;
     accent-color: #9854dc;
+}
+
+.cd-note-box {
+    margin-top: 10px;
+    border: 1px solid rgba(139, 92, 246, 0.14);
+    background: rgba(255, 255, 255, 0.75);
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.cd-note-input {
+    width: 100%;
+    resize: vertical;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 10px 12px;
+    font-weight: 700;
+    outline: none;
+    background: #fff;
+}
+
+.cd-note-actions {
+    margin-top: 10px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.cd-note-list {
+    margin-top: 12px;
+    display: grid;
+    gap: 10px;
+}
+
+.cd-note-item {
+    border: 1px solid rgba(139, 92, 246, 0.12);
+    background: rgba(248, 246, 255, 0.85);
+    border-radius: 14px;
+    padding: 10px 12px;
+}
+
+.cd-note-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.6);
+}
+
+.cd-note-msg {
+    margin-top: 6px;
+    font-weight: 800;
+    font-size: 13px;
+    color: #111;
+    white-space: pre-wrap;
 }
 
 /* Responsive */

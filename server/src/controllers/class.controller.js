@@ -1,5 +1,6 @@
 const Class = require("../models/Class");
 const Student = require("../models/Student");
+const Attendance = require("../models/Attendance");
 
 exports.getAvailable = async (req, res) => {
     try {
@@ -7,11 +8,19 @@ exports.getAvailable = async (req, res) => {
             .sort({ createdAt: -1 })
             .lean();
 
-        const classes = list.map((c) => ({
-            ...c,
-            totalStudents: c.students?.length || 0,
-            studentCount: c.students?.length || 0,
-        }));
+        const now = Date.now();
+
+        const classes = list.map((c) => {
+            const until = c.onlineUntil ? new Date(c.onlineUntil).getTime() : 0;
+            const isOnlineNow = !!c.isOnline && until > now;
+
+            return {
+                ...c,
+                isOnline: isOnlineNow,
+                totalStudents: c.students?.length || 0,
+                studentCount: c.students?.length || 0,
+            };
+        });
 
         return res.json({ metadata: { classes } });
     } catch (err) {
@@ -33,7 +42,7 @@ exports.createClass = async (req, res) => {
             name: name.trim(),
             subject: subject.trim(),
             scheduleText: scheduleText?.trim() || "",
-            durationMinutes: Number(durationMinutes) || 90, // ✅ default 90
+            durationMinutes: Number(durationMinutes) || 90,
             students: [],
             isActive: true,
         });
@@ -53,12 +62,17 @@ exports.createClass = async (req, res) => {
 };
 
 exports.getById = async (req, res) => {
+    const id = req.params.id;
     try {
         const cls = await Class.findById(req.params.id)
             .populate("students", "fullName email dob homework")
             .lean();
 
         if (!cls) return res.status(404).json({ message: "Class not found" });
+
+        const now = Date.now();
+        const until = cls.onlineUntil ? new Date(cls.onlineUntil).getTime() : 0;
+        const isOnlineNow = cls.isOnline && until > now;
 
         return res.json({
             metadata: {
@@ -68,6 +82,8 @@ exports.getById = async (req, res) => {
                     studentCount: cls.students?.length || 0,
                     nextSessionDay: "Monday",
                     nextSessionTime: "Dec 30, 9:00 AM",
+                    isOnline: isOnlineNow,
+                    onlineUntil: cls.onlineUntil || null,
                 },
             },
         });
@@ -135,18 +151,64 @@ exports.setOnline = async (req, res) => {
 
         // bạn muốn online nghĩa là gì thì set ở đây.
         // Hiện schema Class của bạn không có field "online",
-        // nên mình map tạm vào isActive (hoặc bạn tạo field mới).
-        const { isActive } = req.body || {};
-        if (typeof isActive !== "boolean") {
+        // nên mình map tạm vào isOnline (hoặc bạn tạo field mới).
+        const { isOnline } = req.body || {};
+        if (typeof isOnline !== "boolean") {
             return res
                 .status(400)
-                .json({ message: "isActive must be boolean" });
+                .json({ message: "isOnline must be boolean" });
         }
 
-        cls.isActive = isActive;
+        cls.isOnline = isOnline;
         await cls.save();
 
         return res.json({ metadata: { class: cls } });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+exports.pingOnline = async (req, res) => {
+    try {
+        const classId = req.params.id;
+
+        const cls = await Class.findById(classId).lean();
+        if (!cls) return res.status(404).json({ message: "Class not found" });
+
+        const duration = Number(cls.durationMinutes) || 90;
+        const onlineMinutes = Math.max(1, duration - 15);
+        const onlineUntil = new Date(Date.now() + onlineMinutes * 60 * 1000);
+
+        const updated = await Class.findByIdAndUpdate(
+            classId,
+            { $set: { isOnline: true, onlineUntil } },
+            { new: true }
+        ).lean();
+
+        return res.json({
+            metadata: { class: updated, onlineMinutes, onlineUntil },
+        });
+    } catch (err) {
+        return res.status(500).json({ message: err.message });
+    }
+};
+
+exports.deleteClass = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const cls = await Class.findById(id);
+        if (!cls) return res.status(404).json({ message: "Class not found" });
+
+        // (optional) xóa attendance records của lớp
+        // nếu bạn muốn sạch DB
+        try {
+            await Attendance.deleteMany({ classId: id });
+        } catch (_) {}
+
+        await Class.findByIdAndDelete(id);
+
+        return res.json({ metadata: { deleted: true, classId: id } });
     } catch (err) {
         return res.status(500).json({ message: err.message });
     }

@@ -22,7 +22,6 @@ export default function WorkspaceLayout() {
             <aside
                 className={`workspace-sidebar ${collapsed ? "collapsed" : ""}`}
             >
-                {/* giữ nguyên brand, chỉ thêm nút icon kế bên */}
                 <div className="workspace-brand-row">
                     <Link to="/workspace" className="workspace-brand">
                         <img
@@ -42,9 +41,7 @@ export default function WorkspaceLayout() {
                         }
                         title={collapsed ? "Mở rộng" : "Thu gọn"}
                     >
-                        {/* icon thu gọn/mở rộng */}
                         {collapsed ? (
-                            // expand
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 height="20"
@@ -55,7 +52,6 @@ export default function WorkspaceLayout() {
                                 <path d="M640-240 584-296l184-184-184-184 56-56 240 240-240 240ZM80-240v-80h360v80H80Zm0-200v-80h360v80H80Zm0-200v-80h360v80H80Z" />
                             </svg>
                         ) : (
-                            // collapse
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 height="20"
@@ -77,7 +73,6 @@ export default function WorkspaceLayout() {
                                 className={navClass}
                             >
                                 <span className="workspace-nav-icon">
-                                    {/* icon giữ nguyên */}
                                     <svg
                                         xmlns="http://www.w3.org/2000/svg"
                                         height="20"
@@ -114,29 +109,6 @@ export default function WorkspaceLayout() {
                                 </span>
                                 <span className="workspace-nav-text">
                                     Staffs
-                                </span>
-                            </NavLink>
-                        </li>
-
-                        <li>
-                            <NavLink
-                                to="/workspace/messages"
-                                className={navClass}
-                            >
-                                <span className="workspace-nav-icon">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        height="20"
-                                        viewBox="0 -960 960 960"
-                                        width="20"
-                                        fill="currentColor"
-                                        aria-hidden="true"
-                                    >
-                                        <path d="M240-384h336v-72H240v72Zm0-132h480v-72H240v72Zm0-132h480v-72H240v72ZM96-96v-696q0-29.7 21.15-50.85Q138.3-864 168-864h624q29.7 0 50.85 21.15Q864-821.7 864-792v480q0 29.7-21.15 50.85Q821.7-240 792-240H240L96-96Z" />
-                                    </svg>
-                                </span>
-                                <span className="workspace-nav-text">
-                                    Messages
                                 </span>
                             </NavLink>
                         </li>

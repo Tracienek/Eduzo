@@ -8,9 +8,9 @@
    CSS Variables (Purple Theme)
 ================================ */
 :root {
-    --primary-color: #9854dc;
-    --secondary-color: #e2ccf8;
-    --tertiary-color: #7545a5;
+    --primary-color: #ab79dc;
+    --secondary-color: #e9d8f9;
+    --tertiary-color: #805ca3;
     --light-purple: #f6f0fe;
 
     /* Button */
@@ -26,9 +26,9 @@
     --danger: #ef4444;
 
     /* Backgrounds */
-    --bg: #ffffff;
+    --bg: #fefeff;
     --purple-bg: #f5f3ff;
-    --bg-form: #faf9ff;
+    --bg-form: #fcf9ff;
 
     /* Border & shadow */
     --border: #e5e7eb;
@@ -67,6 +67,7 @@ body {
     scroll-behavior: smooth;
     background-color: var(--bg);
     color: var(--text-color-dark);
+    overflow-x: hidden;
 }
 
 /* ================================

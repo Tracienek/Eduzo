@@ -20,6 +20,7 @@ import PublicLayout from "./components/layout/PublicLayout.jsx";
 import WorkspaceLayout from "./pages/workSpace/WorkspaceLayout.jsx";
 import ClassesPage from "./pages/workspace/classes/ClassesPage.jsx";
 import ClassDetailPage from "./pages/workspace/classes/classDetail/ClassDetailPage.jsx";
+import FullAttendancePage from "./pages/workspace/classes/attendance/FullAttendancePage.jsx";
 
 const router = createBrowserRouter([
     {
@@ -43,11 +44,14 @@ const router = createBrowserRouter([
         path: "/workspace",
         element: <WorkspaceLayout />,
         children: [
-            // ✅ when visiting /workspace, go somewhere real
             { index: true, element: <Navigate to="classes" replace /> },
 
             { path: "classes", element: <ClassesPage /> },
             { path: "classes/:classId", element: <ClassDetailPage /> },
+            {
+                path: "classes/:classId/attendance",
+                element: <FullAttendancePage />,
+            },
         ],
     },
 ]);

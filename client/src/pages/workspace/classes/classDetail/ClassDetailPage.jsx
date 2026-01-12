@@ -4,6 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../../utils/newRequest";
 import "./ClassDetailPage.css";
 import CreateStudent from "../createModal/CreateStudent";
+import { useAuth } from "../../../../context/auth/AuthContext";
 
 /** ---------- helpers ---------- **/
 const pad2 = (n) => String(n).padStart(2, "0");
@@ -87,6 +88,8 @@ const DAY_NAME = [
     "Saturday",
 ];
 
+const TUITION_KEY = "__TUITION__";
+
 const extractTimeFromSchedule = (scheduleText = "") => {
     const parts = scheduleText.split("-").map((s) => s.trim());
     return parts.length >= 2 ? parts.slice(1).join("-").trim() : "";
@@ -102,6 +105,9 @@ const toLocalISODate = (d) => {
 export default function ClassDetailPage() {
     const { classId } = useParams();
     const navigate = useNavigate();
+    const { userInfo } = useAuth();
+    const role = userInfo?.role; // "teacher" | "center" | "student"
+    const canUseNotes = role === "teacher" || role === "center";
 
     const [openStudent, setOpenStudent] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -117,12 +123,17 @@ export default function ClassDetailPage() {
     const [displayDate, setDisplayDate] = useState(() => isoToDMY(startDate));
 
     const [checkState, setCheckState] = useState({});
-
     const [isEditingAttendance, setIsEditingAttendance] = useState(false);
-
     const snapshotRef = useRef(null);
 
     const [pendingAttendance, setPendingAttendance] = useState({});
+    const [pendingHomework, setPendingHomework] = useState({});
+    const [pendingTuition, setPendingTuition] = useState({});
+
+    /** ========= NOTES ========= */
+    const [notes, setNotes] = useState([]);
+    const [noteText, setNoteText] = useState("");
+    const [noteLoading, setNoteLoading] = useState(false);
 
     const ensureStudentState = (studentId, base) => {
         if (base[studentId]) return base;
@@ -132,6 +143,7 @@ export default function ClassDetailPage() {
         };
     };
 
+    /** ===== load class ===== */
     useEffect(() => {
         let alive = true;
 
@@ -196,6 +208,73 @@ export default function ClassDetailPage() {
         [sessionDates]
     );
 
+    /** ===== fetch attendance records ===== */
+    useEffect(() => {
+        if (!classId) return;
+
+        let alive = true;
+
+        (async () => {
+            try {
+                const res = await apiUtils.get(
+                    `/classes/${classId}/attendance?dates=${dateKeys.join(",")}`
+                );
+                const records = res?.data?.metadata?.records || [];
+                if (!alive) return;
+
+                setCheckState((prev) => {
+                    const next = { ...prev };
+
+                    for (const r of records) {
+                        const sid = String(r.studentId);
+                        if (!next[sid]) {
+                            next[sid] = {
+                                attendance: {},
+                                homework: {},
+                                tuition: false,
+                            };
+                        }
+
+                        if (
+                            r.dateKey === TUITION_KEY &&
+                            typeof r.tuition === "boolean"
+                        ) {
+                            next[sid] = { ...next[sid], tuition: r.tuition };
+                            continue;
+                        }
+
+                        if (typeof r.attendance === "boolean") {
+                            next[sid] = {
+                                ...next[sid],
+                                attendance: {
+                                    ...(next[sid].attendance || {}),
+                                    [r.dateKey]: r.attendance,
+                                },
+                            };
+                        }
+                        if (typeof r.homework === "boolean") {
+                            next[sid] = {
+                                ...next[sid],
+                                homework: {
+                                    ...(next[sid].homework || {}),
+                                    [r.dateKey]: r.homework,
+                                },
+                            };
+                        }
+                    }
+
+                    return next;
+                });
+            } catch {
+                // ignore
+            }
+        })();
+
+        return () => {
+            alive = false;
+        };
+    }, [classId, dateKeys]);
+
     const toggleLocal = (studentId, type, dateKey, value) => {
         setCheckState((prev) => {
             let next = { ...prev };
@@ -218,18 +297,28 @@ export default function ClassDetailPage() {
         });
     };
 
-    // enter draft mode (attendance)
+    const onlinePingedRef = useRef(false);
+
     const enterAttendanceEditMode = () => {
         if (isEditingAttendance) return;
-        snapshotRef.current = JSON.parse(JSON.stringify(checkState)); // deep copy for cancel
+        if (!onlinePingedRef.current && classId) {
+            onlinePingedRef.current = true;
+            apiUtils.post(`/classes/${classId}/online/ping`).catch(() => {});
+        }
+        snapshotRef.current = JSON.parse(JSON.stringify(checkState));
         setPendingAttendance({});
+        setPendingHomework({});
+        setPendingTuition({});
         setIsEditingAttendance(true);
     };
 
     const exitAttendanceEditMode = () => {
         setIsEditingAttendance(false);
         setPendingAttendance({});
+        setPendingHomework({});
+        setPendingTuition({});
         snapshotRef.current = null;
+        onlinePingedRef.current = false;
     };
 
     const markAttendancePending = (studentId, dateKey, value) => {
@@ -242,17 +331,37 @@ export default function ClassDetailPage() {
         });
     };
 
+    const markHomeworkPending = (studentId, dateKey, value) => {
+        setPendingHomework((prev) => {
+            const cur = prev[studentId] || {};
+            return { ...prev, [studentId]: { ...cur, [dateKey]: value } };
+        });
+    };
+
+    const markTuitionPending = (studentId, value) => {
+        setPendingTuition((prev) => ({ ...prev, [studentId]: value }));
+    };
+
     const saveAttendance = async () => {
-        // build list
         const changes = [];
+
         Object.entries(pendingAttendance).forEach(([studentId, m]) => {
             Object.entries(m || {}).forEach(([dateKey, value]) => {
                 changes.push({ studentId, dateKey, attendance: !!value });
             });
         });
 
-        if (!changes.length) {
-            // nothing to save, just exit
+        Object.entries(pendingHomework).forEach(([studentId, m]) => {
+            Object.entries(m || {}).forEach(([dateKey, value]) => {
+                changes.push({ studentId, dateKey, homework: !!value });
+            });
+        });
+
+        const tuitionChanges = Object.entries(pendingTuition).map(
+            ([studentId, tuition]) => ({ studentId, tuition: !!tuition })
+        );
+
+        if (!changes.length && !tuitionChanges.length) {
             exitAttendanceEditMode();
             return;
         }
@@ -260,14 +369,14 @@ export default function ClassDetailPage() {
         try {
             await apiUtils.patch(`/classes/${classId}/attendance/bulk`, {
                 changes,
+                tuitionChanges,
             });
 
             exitAttendanceEditMode();
         } catch (err) {
             console.error(err);
             alert(
-                err?.response?.data?.message ||
-                    "Save attendance failed. Please try again."
+                err?.response?.data?.message || "Save failed. Please try again."
             );
         }
     };
@@ -276,6 +385,73 @@ export default function ClassDetailPage() {
         const snap = snapshotRef.current;
         if (snap) setCheckState(snap);
         exitAttendanceEditMode();
+    };
+
+    /** ===== NOTES: fetch & submit (teacher <-> center only) ===== */
+    useEffect(() => {
+        if (!classId) return;
+        if (!canUseNotes) return;
+
+        let alive = true;
+
+        (async () => {
+            try {
+                const res = await apiUtils.get(`/classes/${classId}/notes`);
+                const list =
+                    res?.data?.metadata?.notes ||
+                    res?.data?.notes ||
+                    res?.data?.metadata ||
+                    [];
+                if (!alive) return;
+                setNotes(Array.isArray(list) ? list : []);
+            } catch {
+                if (alive) setNotes([]);
+            }
+        })();
+
+        return () => {
+            alive = false;
+        };
+    }, [classId, canUseNotes]);
+
+    const submitNote = async () => {
+        if (!canUseNotes) return;
+
+        const content = noteText.trim();
+        if (!content) {
+            alert("content is required");
+            return;
+        }
+
+        const toRole = role === "teacher" ? "center" : "teacher";
+
+        try {
+            setNoteLoading(true);
+
+            const res = await apiUtils.post(`/classes/${classId}/notes`, {
+                content, // ✅ MUST be `content`
+                toRole, // ✅ teacher -> center | center -> teacher
+            });
+
+            const created =
+                res?.data?.metadata?.note || res?.data?.note || null;
+
+            // optimistic prepend (fallback if BE returns nothing)
+            const fallback = {
+                _id: `tmp-${Date.now()}`,
+                content,
+                fromRole: role,
+                toRole,
+                createdAt: new Date().toISOString(),
+            };
+
+            setNotes((prev) => [created || fallback, ...prev]);
+            setNoteText("");
+        } catch (e) {
+            alert(e?.response?.data?.message || "Send note failed");
+        } finally {
+            setNoteLoading(false);
+        }
     };
 
     if (loading) return <div className="cd-muted">Loading...</div>;
@@ -390,11 +566,19 @@ export default function ClassDetailPage() {
                     </div>
                     <div className="cd-stat-sub">{nextSessionSubLabel}</div>
                 </div>
+
+                <div className="cd-stat">
+                    <div className="cd-stat-label">Duration</div>
+                    <div className="cd-stat-value">
+                        {cls?.durationMinutes ?? 90} min
+                    </div>
+                    <div className="cd-stat-sub">Per session</div>
+                </div>
             </div>
 
             <div className="cd-section">
                 <div className="cd-section-head">
-                    <h3>Students</h3>
+                    <h2>Students</h2>
 
                     <div className="cd-controls">
                         <div className="cd-date">
@@ -506,7 +690,6 @@ export default function ClassDetailPage() {
                                             <Fragment
                                                 key={`pair-row-${studentId}-${i}`}
                                             >
-                                                {/* Attendance */}
                                                 <td className="cd-center">
                                                     <input
                                                         type="checkbox"
@@ -517,7 +700,6 @@ export default function ClassDetailPage() {
                                                         }
                                                         onChange={(e) => {
                                                             enterAttendanceEditMode();
-
                                                             const val =
                                                                 e.target
                                                                     .checked;
@@ -546,14 +728,24 @@ export default function ClassDetailPage() {
                                                                 studentId
                                                             ]?.homework?.[dk]
                                                         }
-                                                        onChange={(e) =>
+                                                        onChange={(e) => {
+                                                            enterAttendanceEditMode();
+                                                            const val =
+                                                                e.target
+                                                                    .checked;
+
                                                             toggleLocal(
                                                                 studentId,
                                                                 "homework",
                                                                 dk,
-                                                                e.target.checked
-                                                            )
-                                                        }
+                                                                val
+                                                            );
+                                                            markHomeworkPending(
+                                                                studentId,
+                                                                dk,
+                                                                val
+                                                            );
+                                                        }}
                                                     />
                                                 </td>
                                             </Fragment>
@@ -566,14 +758,22 @@ export default function ClassDetailPage() {
                                                     !!checkState?.[studentId]
                                                         ?.tuition
                                                 }
-                                                onChange={(e) =>
+                                                onChange={(e) => {
+                                                    enterAttendanceEditMode();
+                                                    const val =
+                                                        e.target.checked;
+
                                                     toggleLocal(
                                                         studentId,
                                                         "tuition",
                                                         null,
-                                                        e.target.checked
-                                                    )
-                                                }
+                                                        val
+                                                    );
+                                                    markTuitionPending(
+                                                        studentId,
+                                                        val
+                                                    );
+                                                }}
                                             />
                                         </td>
                                     </tr>
@@ -624,6 +824,85 @@ export default function ClassDetailPage() {
                     </div>
                 )}
             </div>
+
+            {/* ===== NOTES (Teacher <-> Center only) ===== */}
+            {canUseNotes && (
+                <div className="cd-section">
+                    <div className="cd-section-head">
+                        <h2>
+                            Notes{" "}
+                            <span
+                                style={{
+                                    fontSize: 12,
+                                    fontWeight: 800,
+                                    color: "rgba(0,0,0,.55)",
+                                }}
+                            >
+                                (
+                                {role === "teacher"
+                                    ? "Teacher → Center"
+                                    : "Center → Teacher"}
+                                )
+                            </span>
+                        </h2>
+                    </div>
+
+                    <div className="cd-note-box">
+                        <textarea
+                            className="cd-note-input"
+                            rows={3}
+                            value={noteText}
+                            onChange={(e) => setNoteText(e.target.value)}
+                            placeholder={
+                                role === "teacher"
+                                    ? "Write a note for Center (shows in Center notifications)..."
+                                    : "Write a note for Teacher (shows in Teacher notifications)..."
+                            }
+                        />
+
+                        <div className="cd-note-actions">
+                            <button
+                                type="button"
+                                className="cd-btn"
+                                onClick={submitNote}
+                                disabled={!noteText.trim() || noteLoading}
+                            >
+                                {noteLoading ? "Sending..." : "Send note"}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="cd-note-list">
+                        {notes.length === 0 && (
+                            <div className="cd-empty" style={{ marginTop: 10 }}>
+                                No notes yet
+                            </div>
+                        )}
+
+                        {notes.map((n) => (
+                            <div className="cd-note-item" key={n._id}>
+                                <div className="cd-note-meta">
+                                    <span className="cd-note-role">
+                                        {n.fromRole} → {n.toRole}
+                                    </span>
+                                    <span className="cd-note-time">
+                                        {n?.createdAt
+                                            ? new Date(
+                                                  n.createdAt
+                                              ).toLocaleString()
+                                            : ""}
+                                    </span>
+                                </div>
+
+                                {/* ✅ IMPORTANT: use n.content */}
+                                <div className="cd-note-msg">
+                                    {n.content || ""}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

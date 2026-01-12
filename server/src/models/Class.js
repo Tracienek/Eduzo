@@ -6,9 +6,13 @@ const ClassSchema = new mongoose.Schema(
         subject: String,
         scheduleText: String,
         students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
-        isActive: { type: Boolean, default: true },
+
+        isActive: { type: Boolean, default: true, index: true },
+
+        isOnline: { type: Boolean, default: false, index: true },
+        onlineUntil: { type: Date, default: null, index: true },
+
         durationMinutes: { type: Number, default: 90 },
-        // activeUntil: { type: Date, default: null },
     },
     { timestamps: true }
 );

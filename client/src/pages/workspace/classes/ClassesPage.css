@@ -1,6 +1,6 @@
 /* pages/workspace/classes/ClassesPage.css */
 .classes-page {
-    background: #f6efff;
+    background: var(--bg);
     border-radius: 16px;
     padding: 18px;
     min-height: calc(100vh - 64px - 32px);
@@ -17,16 +17,6 @@
 .classes-page-header h2 {
     margin: 0;
     font-size: 26px;
-}
-
-.classes-primary-btn {
-    height: 36px;
-    padding: 0 12px;
-    border-radius: 10px;
-    border: 1px solid #e6e2ff;
-    background: #fff;
-    cursor: pointer;
-    font-weight: 600;
 }
 
 .classes-muted {
@@ -120,6 +110,37 @@
 }
 .dot-gray {
     background: #9ca3af;
+}
+
+.class-card {
+    position: relative;
+}
+
+.class-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.class-card-delete {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid #efeaff;
+    background: #ffd3d3;
+    cursor: pointer;
+    font-weight: 900;
+    color: #ff4545;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.class-card-delete:hover {
+    color: #fff;
+    background: var(--danger);
 }
 
 @media (max-width: 1100px) {

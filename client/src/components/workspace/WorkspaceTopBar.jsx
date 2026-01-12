@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./WorkspaceTopBar.css";
 import { useAuth } from "../../context/auth/AuthContext";
 import { apiUtils } from "../../utils/newRequest";
+import CreateClass from "../../pages/workspace/classes/createModal/CreateClass";
 
 // NOTE: WorkspaceTopBar KHÔNG dùng socket trực tiếp.
 // Socket (nếu có) nằm trong AuthContext.jsx.
@@ -12,6 +13,8 @@ import { apiUtils } from "../../utils/newRequest";
 export default function WorkspaceTopBar() {
     const { userInfo, logout } = useAuth();
     const role = userInfo?.role;
+
+    const [openCreate, setOpenCreate] = useState(false);
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -137,7 +140,7 @@ export default function WorkspaceTopBar() {
 
     return (
         <header className="workspace-topbar">
-            {/* SEARCH */}
+            {/* LEFT: SEARCH */}
             <div
                 className="workspace-topbar-search-wrapper"
                 ref={searchWrapRef}
@@ -169,7 +172,6 @@ export default function WorkspaceTopBar() {
                                 <div className="workspace-search-title">
                                     Students
                                 </div>
-
                                 {results.students.slice(0, 8).map((s) => (
                                     <button
                                         key={s._id}
@@ -200,7 +202,6 @@ export default function WorkspaceTopBar() {
                                 <div className="workspace-search-title">
                                     Classes
                                 </div>
-
                                 {results.classes.slice(0, 8).map((c) => (
                                     <button
                                         key={c._id}
@@ -231,7 +232,27 @@ export default function WorkspaceTopBar() {
                 )}
             </div>
 
-            {/* ACTIONS */}
+            {/* MIDDLE: CREATE CLASS */}
+            <div className="workspace-topbar-mid">
+                <button
+                    className="workspace-topbar-primary"
+                    type="button"
+                    onClick={() => setOpenCreate(true)}
+                >
+                    + Classes
+                </button>
+
+                <CreateClass
+                    open={openCreate}
+                    onClose={() => setOpenCreate(false)}
+                    onCreated={(newClass) => {
+                        if (!newClass?._id) return;
+                        navigate(`/workspace/classes/${newClass._id}`);
+                    }}
+                />
+            </div>
+
+            {/* RIGHT: USER */}
             <div className="workspace-topbar-actions">
                 {showCreateBtn && (
                     <button className="workspace-topbar-btn" type="button">
@@ -239,7 +260,6 @@ export default function WorkspaceTopBar() {
                     </button>
                 )}
 
-                {/* USER DROPDOWN */}
                 <div className="workspace-user" ref={userRef}>
                     <button
                         type="button"

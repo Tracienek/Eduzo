@@ -1,3 +1,5 @@
+// utils/newRequest.js
+
 import axios from "axios";
 
 const TOKEN_KEY = "accessToken";
@@ -16,7 +18,7 @@ const newRequest = axios.create({
     withCredentials: true,
 });
 
-// ✅ attach JWT automatically
+// attach JWT automatically
 newRequest.interceptors.request.use(
     (config) => {
         const token = tokenStore.get();

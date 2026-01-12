@@ -3,26 +3,46 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../utils/newRequest";
 import "./ClassesPage.css";
-import CreateClass from "./createModal/CreateClass";
+import { useTranslation } from "react-i18next";
 
-function ClassCard({ c, onOpen }) {
+function ClassCard({ c, onOpen, onDelete }) {
     const isOnline = !!c?.isOnline;
-    const duration = c?.sessionDurationMin ?? 90;
+    const duration = c?.durationMinutes ?? 90;
 
     return (
-        <button className="class-card" type="button" onClick={onOpen}>
-            <div
-                className="class-card-title"
-                style={{
-                    display: "flex",
-                    gap: 8,
-                    alignItems: "center",
-                }}
-            >
-                <span
-                    className={`dot ${isOnline ? "dot-green" : "dot-gray"}`}
-                />
-                {c?.name || c?.className || "Unnamed class"}
+        <div
+            className="class-card"
+            role="button"
+            tabIndex={0}
+            onClick={onOpen}
+            onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") onOpen();
+            }}
+        >
+            {/* TOP */}
+            <div className="class-card-top">
+                <div
+                    className="class-card-title"
+                    style={{ display: "flex", gap: 8, alignItems: "center" }}
+                >
+                    <span
+                        className={`dot ${isOnline ? "dot-green" : "dot-gray"}`}
+                    />
+                    {c?.name || c?.className || "Unnamed class"}
+                </div>
+
+                {/* DELETE BUTTON */}
+                <button
+                    className="class-card-delete"
+                    type="button"
+                    title="Delete class"
+                    onClick={(e) => {
+                        e.stopPropagation(); // quan trọng: không trigger open
+                        onDelete?.(c);
+                    }}
+                >
+                    ✕
+                </button>
             </div>
 
             <div className="class-card-sub">{c?.subject || "—"}</div>
@@ -51,7 +71,7 @@ function ClassCard({ c, onOpen }) {
             <div className="class-card-footer">
                 <span className="linkish">View Details</span>
             </div>
-        </button>
+        </div>
     );
 }
 
@@ -59,7 +79,7 @@ export default function ClassesPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [classes, setClasses] = useState([]);
-    const [openCreate, setOpenCreate] = useState(false);
+    const { t, i18n } = useTranslation();
 
     const fetchClasses = async (setLoadingFlag = false) => {
         try {
@@ -98,7 +118,6 @@ export default function ClassesPage() {
             alive = false;
             clearInterval(t);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const openClass = (c) => navigate(`/workspace/classes/${c._id}`);
@@ -107,13 +126,33 @@ export default function ClassesPage() {
         () => classes.filter((c) => !!c?.isOnline),
         [classes]
     );
-    const allClasses = classes;
+
+    const offlineClasses = useMemo(
+        () => classes.filter((c) => !c?.isOnline),
+        [classes]
+    );
+
+    const handleDelete = async (cls) => {
+        const ok = window.confirm(
+            `Delete class "${
+                cls?.name || "Unnamed"
+            }"?\nThis action cannot be undone.`
+        );
+        if (!ok) return;
+
+        try {
+            await apiUtils.delete(`/classes/${cls._id}`);
+            setClasses((prev) => prev.filter((c) => c._id !== cls._id));
+        } catch (err) {
+            alert(err?.response?.data?.message || "Failed to delete class");
+        }
+    };
 
     return (
         <div className="classes-page">
             {/* ===== Online Class Section ===== */}
             <div className="classes-page-header">
-                <h2>Online Class</h2>
+                <h2>{t("classes.online")}</h2>
             </div>
 
             {loading && <div className="classes-muted">Loading...</div>}
@@ -131,44 +170,29 @@ export default function ClassesPage() {
                             key={c._id}
                             c={c}
                             onOpen={() => openClass(c)}
+                            onDelete={handleDelete}
                         />
                     ))}
                 </div>
             )}
 
-            {/* ===== Your Classes Section ===== */}
+            {/* ===== Your Classes (Offline) ===== */}
             <div className="classes-page-header" style={{ marginTop: 18 }}>
                 <h2>Your Classes</h2>
-                <button
-                    className="classes-primary-btn"
-                    type="button"
-                    onClick={() => setOpenCreate(true)}
-                >
-                    + Classes
-                </button>
             </div>
 
-            <CreateClass
-                open={openCreate}
-                onClose={() => setOpenCreate(false)}
-                onCreated={(newClass) => {
-                    if (!newClass?._id) return;
-                    // push vào list luôn cho mượt UX
-                    setClasses((prev) => [newClass, ...prev]);
-                }}
-            />
-
-            {!loading && allClasses.length === 0 && (
+            {!loading && offlineClasses.length === 0 && (
                 <div className="classes-muted">No available classes</div>
             )}
 
-            {!loading && allClasses.length > 0 && (
+            {!loading && offlineClasses.length > 0 && (
                 <div className="classes-grid">
-                    {allClasses.map((c) => (
+                    {offlineClasses.map((c) => (
                         <ClassCard
                             key={c._id}
                             c={c}
                             onOpen={() => openClass(c)}
+                            onDelete={handleDelete}
                         />
                     ))}
                 </div>

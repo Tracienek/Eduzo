@@ -41,7 +41,6 @@ export default function SignUp() {
         else if (inputs.confirmPassword !== inputs.password)
             errs.confirmPassword = "Passwords do not match";
 
-        // nếu BE yêu cầu centers thì giữ, không thì xoá đoạn này + field
         if (!inputs.centers?.toString().trim())
             errs.centers = "Please select centers count";
 
@@ -94,7 +93,7 @@ export default function SignUp() {
     return (
         <>
             <h2 className="auth-title">Sign Up</h2>
-            <p className="auth-subtitle">Create your teacher account</p>
+            <p className="auth-subtitle">Create your account</p>
 
             <form className="auth-form" onSubmit={onSubmit}>
                 <div className="auth-field">
@@ -155,9 +154,9 @@ export default function SignUp() {
                             className="auth-input"
                         >
                             <option value="">Select centers count</option>
-                            <option value="1">1 center</option>
-                            <option value="2">2 centers</option>
-                            <option value="3">3 centers</option>
+                            <option value="1">1-2 center</option>
+                            <option value="2">3-5 centers</option>
+                            <option value="3">5+ centers</option>
                         </select>
                     </div>
                     <p className={`auth-error ${errors.centers ? "show" : ""}`}>

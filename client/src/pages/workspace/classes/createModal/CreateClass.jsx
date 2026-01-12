@@ -1,12 +1,22 @@
-// src/pages/workspace/classes/createModal
 import { useEffect, useMemo, useState } from "react";
 import { apiUtils } from "../../../../utils/newRequest";
 import "./CreateModal.css";
 
+const DAYS = [
+    { key: "mon", label: "Mon", value: "Mon" },
+    { key: "tue", label: "Tue", value: "Tue" },
+    { key: "wed", label: "Wed", value: "Wed" },
+    { key: "thu", label: "Thu", value: "Thu" },
+    { key: "fri", label: "Fri", value: "Fri" },
+    { key: "sat", label: "Sat", value: "Sat" },
+    { key: "sun", label: "Sun", value: "Sun" },
+];
+
 const DEFAULT_FORM = {
     name: "",
     subject: "",
-    scheduleText: "Mon, Wed, Fri - 9:00 AM",
+    scheduleTime: "9:00 AM",
+    durationMinutes: 90,
 };
 
 const unwrap = (res) => {
@@ -15,26 +25,41 @@ const unwrap = (res) => {
     return data?.class ?? data?.newClass ?? data;
 };
 
+const buildScheduleText = (days = [], time = "") => {
+    const d = (Array.isArray(days) ? days : []).filter(Boolean);
+    const left = d.length ? d.join(", ") : "Mon, Wed, Fri";
+    const t = String(time || "").trim();
+    return t ? `${left} - ${t}` : left;
+};
+
 export default function CreateClass({ open, onClose, onCreated }) {
     const [form, setForm] = useState(DEFAULT_FORM);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState("");
+    const [scheduleTouched, setScheduleTouched] = useState(false);
 
-    const canSubmit = useMemo(
-        () => form.name.trim() && form.subject.trim(),
-        [form.name, form.subject]
-    );
+    const scheduleTextPreview = useMemo(() => {
+        return buildScheduleText(form.scheduleDays, form.scheduleTime);
+    }, [form.scheduleDays, form.scheduleTime]);
 
-    // reset form + error mỗi lần mở modal
+    const canSubmit = useMemo(() => {
+        const okName = !!form.name.trim();
+        const okSubject = !!form.subject.trim();
+        const okDays =
+            Array.isArray(form.scheduleDays) && form.scheduleDays.length > 0;
+        const okDuration = Number(form.durationMinutes) > 0;
+        return okName && okSubject && okDays && okDuration;
+    }, [form.name, form.subject, form.scheduleDays, form.durationMinutes]);
+
     useEffect(() => {
         if (open) {
             setForm(DEFAULT_FORM);
+            setScheduleTouched(false);
             setError("");
             setSubmitting(false);
         }
     }, [open]);
 
-    // ESC to close
     useEffect(() => {
         if (!open) return;
         const onKeyDown = (e) => {
@@ -47,6 +72,20 @@ export default function CreateClass({ open, onClose, onCreated }) {
     const update = (key) => (e) => {
         setError("");
         setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    };
+
+    const toggleDay = (dayValue) => {
+        setError("");
+        setScheduleTouched(true);
+
+        setForm((prev) => {
+            const set = new Set(prev.scheduleDays || []);
+            if (set.has(dayValue)) set.delete(dayValue);
+            else set.add(dayValue);
+
+            const ordered = DAYS.map((d) => d.value).filter((v) => set.has(v));
+            return { ...prev, scheduleDays: ordered };
+        });
     };
 
     const closeOnBackdrop = (e) => {
@@ -64,7 +103,8 @@ export default function CreateClass({ open, onClose, onCreated }) {
             const payload = {
                 name: form.name.trim(),
                 subject: form.subject.trim(),
-                scheduleText: form.scheduleText?.trim() || "",
+                scheduleText: scheduleTextPreview,
+                durationMinutes: Number(form.durationMinutes) || 90,
             };
 
             const res = await apiUtils.post("/classes", payload);
@@ -126,19 +166,71 @@ export default function CreateClass({ open, onClose, onCreated }) {
                         />
                     </label>
 
-                    <label className="cm-label">
+                    {/* Schedule: days + time */}
+                    <div className="cm-label">
                         <span>Schedule</span>
-                        <div className="cm-input cm-input-with-icon">
-                            <span className="cm-icon" aria-hidden="true">
-                                📅
-                            </span>
+
+                        <div className="cm-days">
+                            {DAYS.map((d) => {
+                                const checked = (
+                                    form.scheduleDays || []
+                                ).includes(d.value);
+                                return (
+                                    <button
+                                        key={d.key}
+                                        type="button"
+                                        className={`cm-day-chip ${
+                                            checked ? "active" : ""
+                                        }`}
+                                        onClick={() => toggleDay(d.value)}
+                                    >
+                                        {d.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div
+                            className="cm-input cm-input-with-icon"
+                            style={{ marginTop: 8 }}
+                        >
                             <input
                                 className="cm-input-inner"
-                                value={form.scheduleText}
-                                onChange={update("scheduleText")}
-                                placeholder="Mon, Wed, Fri - 9:00 AM"
+                                value={form.scheduleTime}
+                                onChange={(e) => {
+                                    setScheduleTouched(true);
+                                    update("scheduleTime")(e);
+                                }}
+                                placeholder="e.g: 9:00 AM"
                             />
                         </div>
+
+                        {scheduleTouched && (
+                            <div className="cm-helper">
+                                Preview: <b>{scheduleTextPreview}</b>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Duration */}
+                    <label className="cm-label">
+                        <span>Duration (minutes)</span>
+                        <input
+                            className="cm-input"
+                            type="number"
+                            min="15"
+                            step="5"
+                            value={form.durationMinutes}
+                            onChange={(e) => {
+                                setError("");
+                                const v = Number(e.target.value);
+                                setForm((prev) => ({
+                                    ...prev,
+                                    durationMinutes: v,
+                                }));
+                            }}
+                            placeholder="e.g: 90"
+                        />
                     </label>
 
                     {error && <div className="cm-error">{error}</div>}
