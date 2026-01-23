@@ -81,13 +81,62 @@
     color: rgba(0, 0, 0, 0.6);
 }
 
-.fa-date {
-    height: 38px;
-    padding: 0 10px;
-    border-radius: 10px;
-    border: 1px solid rgba(139, 92, 246, 0.18);
+.fa-date-input {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.fa-date-text {
+    height: 36px;
+    padding: 0 44px 0 12px;
+    border-radius: 6px;
+    border: 1px solid #111827;
     background: #fff;
-    font-weight: 700;
+    font-size: 14px;
+    min-width: 200px;
+}
+
+/* đặt icon đè lên trong input */
+.fa-date-icon-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fa-date-icon-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.fa-real-date {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.fa-real-date::-webkit-calendar-picker-indicator {
+    display: none;
+}
+.fa-real-date::-webkit-inner-spin-button {
+    display: none;
 }
 
 .fa-note {
@@ -106,7 +155,7 @@
 }
 
 .fa-card {
-    border-radius: 16px;
+    border-radius: 10px;
     border: 1px solid rgba(139, 92, 246, 0.14);
     background: rgba(255, 255, 255, 0.7);
     overflow: hidden;
@@ -127,7 +176,7 @@
     border-spacing: 0;
 }
 
-/* Header (NOT sticky now, like image 2 cards) */
+/* Header */
 .fa-card-table thead th {
     background: rgba(248, 246, 255, 0.95);
     border-bottom: 1px solid rgba(139, 92, 246, 0.12);

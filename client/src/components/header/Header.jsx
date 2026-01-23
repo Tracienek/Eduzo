@@ -53,7 +53,7 @@ const Header = () => {
                         <Link className="lp-links" to="/auth/signin">
                             Sign in
                         </Link>
-                        <Link className="lp-action-btn" to="/auth/signup">
+                        <Link className="lp-action-btn" to="/auth/signUp">
                             Start free trial
                         </Link>
                     </div>

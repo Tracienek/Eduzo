@@ -1,3 +1,5 @@
+// server/src/controllers/attendance.controller.js
+
 const mongoose = require("mongoose");
 const Attendance = require("../models/Attendance");
 const TUITION_KEY = "__TUITION__";

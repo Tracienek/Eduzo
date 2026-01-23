@@ -91,8 +91,20 @@ export const AuthProvider = ({ children }) => {
     // --------------------------------------------------
     const login = async (email, password) => {
         try {
-            await newRequest.post("/auth/login", { email, password });
-            const user = await loadUserMe(); // Refresh userInfo
+            const res = await newRequest.post("/auth/signIn", {
+                email,
+                password,
+            });
+
+            const accessToken = res?.data?.metadata?.accessToken;
+            if (accessToken) {
+                localStorage.setItem("accessToken", accessToken);
+                Cookies.set("accessToken", accessToken); // optional
+                // ✅ không cần set defaults vì interceptor sẽ tự gắn token
+            }
+
+            // ✅ load /user/me để cập nhật userInfo ngay
+            const user = await loadUserMe();
             return { success: true, user };
         } catch (err) {
             console.log("Login failed:", err);
@@ -102,18 +114,18 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await apiUtils.post("auth/logout");
+            await apiUtils.post("/auth/logout");
         } catch (err) {
             console.error("Logout error:", err);
         }
 
-        Cookies.remove("token");
-        localStorage.removeItem("token");
+        Cookies.remove("accessToken");
+        localStorage.removeItem("accessToken");
         setUserInfo(null);
         setMyCharacters([]);
         setCharacterInfo(null);
 
-        window.location.href = "/auth/signin";
+        window.location.href = "/auth/signIn";
     };
 
     // --------------------------------------------------

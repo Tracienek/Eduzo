@@ -1,3 +1,5 @@
+// server/src/middlewares/auth.middleware.js
+
 const jwt = require("jsonwebtoken");
 
 module.exports = function authMiddleware(req, res, next) {

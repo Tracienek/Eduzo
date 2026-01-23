@@ -1,3 +1,5 @@
+// base.scss
+
 /* ================================
    Google Fonts
 ================================ */
@@ -107,7 +109,7 @@ button {
     z-index: 1;
 }
 
-/* Background effect layer (for login page, hero, etc.) */
+/* Background effect layer (for signIn page, hero, etc.) */
 .finisher-header {
     position: fixed;
     inset: 0;

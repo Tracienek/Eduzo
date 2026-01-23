@@ -17,10 +17,13 @@ import LandingPage from "./pages/landing/LandingPage.jsx";
 // import About from "./pages/landing/About.jsx";
 import Services from "./pages/services/Services.jsx";
 import PublicLayout from "./components/layout/PublicLayout.jsx";
-import WorkspaceLayout from "./pages/workSpace/WorkspaceLayout.jsx";
+import WorkspaceLayout from "./pages/workspace/WorkspaceLayout.jsx";
 import ClassesPage from "./pages/workspace/classes/ClassesPage.jsx";
 import ClassDetailPage from "./pages/workspace/classes/classDetail/ClassDetailPage.jsx";
 import FullAttendancePage from "./pages/workspace/classes/attendance/FullAttendancePage.jsx";
+import TeachersPanel from "./pages/workspace/teachers/TeacherPage.jsx";
+import ProfilePage from "./pages/workspace/profile/ProfilePage.jsx";
+import TeacherDetail from "./pages/workspace/teachers/teacherDetail/TeacherDetail.jsx";
 
 const router = createBrowserRouter([
     {
@@ -52,6 +55,15 @@ const router = createBrowserRouter([
                 path: "classes/:classId/attendance",
                 element: <FullAttendancePage />,
             },
+            {
+                path: "teachers",
+                children: [
+                    { index: true, element: <TeachersPanel /> },
+                    { path: ":teacherId", element: <TeacherDetail /> },
+                ],
+            },
+
+            { path: "profile", element: <ProfilePage /> },
         ],
     },
 ]);

@@ -1,0 +1,269 @@
+/* ===== Root wrapper ===== */
+.td-wrap {
+    padding: 24px;
+    background: var(--bg);
+    min-height: 100%;
+    box-sizing: border-box;
+    border-radius: 10px;
+}
+
+/* ===== Top bar ===== */
+.td-topbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.td-back {
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.td-back:hover {
+    text-decoration: underline;
+}
+
+.td-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* ===== Grid layout ===== */
+.td-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+}
+
+/* ===== Cards ===== */
+.td-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.td-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.td-card-head h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* ===== Profile card ===== */
+.td-profile {
+    text-align: center;
+}
+
+.td-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin: 0 auto 12px;
+    background: #f1f5f9;
+}
+
+.td-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.td-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #111827;
+}
+
+.td-meta {
+    text-align: left;
+    margin-top: 12px;
+}
+
+.td-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.td-row:last-child {
+    border-bottom: none;
+}
+
+.td-label {
+    color: #6b7280;
+}
+
+.td-value {
+    color: #111827;
+    font-weight: 500;
+}
+
+/* ===== Profile actions ===== */
+.td-actions {
+    margin-top: 16px;
+}
+
+.td-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #f9fafb;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.td-btn:hover {
+    background: #f3f4f6;
+}
+
+/* ===== Chips ===== */
+.td-chip {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: #374151;
+}
+
+.td-chip--soon {
+    background: #fde68a;
+    color: #92400e;
+}
+
+/* ===== Feedback ===== */
+.td-placeholder {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 13px;
+    color: #6b7280;
+    white-space: pre-wrap;
+}
+
+.td-note {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* ===== Classes ===== */
+.td-classes {
+    grid-column: span 2;
+}
+
+.td-class-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.td-class-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    cursor: pointer;
+    text-align: left;
+}
+
+.td-class-item:hover {
+    background: #f9fafb;
+}
+
+.td-class-item:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.td-class-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.td-class-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.td-class-sub {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.td-class-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.td-pill {
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.td-open {
+    font-size: 18px;
+    color: #9ca3af;
+}
+
+/* ===== Footnote ===== */
+.td-footnote {
+    margin-top: 10px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+/* ===== States ===== */
+.td-muted {
+    padding: 20px;
+    color: #6b7280;
+}
+
+.td-error {
+    padding: 20px;
+    color: #b91c1c;
+}
+
+.td-error-inline {
+    font-size: 13px;
+    color: #b91c1c;
+    margin-bottom: 8px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 900px) {
+    .td-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .td-classes {
+        grid-column: auto;
+    }
+}

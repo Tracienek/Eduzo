@@ -1,3 +1,5 @@
+//auth.controller.js
+
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
@@ -6,7 +8,7 @@ const signToken = (user) => {
     return jwt.sign(
         { userId: user._id, role: user.role, email: user.email },
         process.env.JWT_SECRET,
-        { expiresIn: process.env.JWT_EXPIRES_IN || "7d" }
+        { expiresIn: process.env.JWT_EXPIRES_IN || "7d" },
     );
 };
 
@@ -39,7 +41,7 @@ exports.signUp = async (req, res) => {
             email: normalizedEmail,
             fullName: String(fullName).trim(),
             passwordHash,
-            role: "teacher",
+            role: "center",
         });
 
         const accessToken = signToken(user);
@@ -77,11 +79,15 @@ exports.signIn = async (req, res) => {
         }
 
         const normalizedEmail = String(email).toLowerCase().trim();
-        const user = await User.findOne({ email: normalizedEmail });
-        if (!user)
+        const user = await User.findOne({ email: normalizedEmail }).select(
+            "+passwordHash",
+        );
+
+        if (!user) {
             return res
                 .status(401)
                 .json({ message: "Invalid email or password" });
+        }
 
         const ok = await bcrypt.compare(password, user.passwordHash);
         if (!ok)
@@ -91,6 +97,7 @@ exports.signIn = async (req, res) => {
 
         const accessToken = signToken(user);
 
+        // auth.controller.js (trong signIn)
         return res.json({
             metadata: {
                 user: {
@@ -98,6 +105,7 @@ exports.signIn = async (req, res) => {
                     email: user.email,
                     fullName: user.fullName,
                     role: user.role,
+                    mustChangePassword: user.mustChangePassword || false, // ✅ add
                 },
                 accessToken,
             },

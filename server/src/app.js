@@ -1,9 +1,12 @@
+// server/src/app.js
+
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
 const mongoose = require("mongoose");
 
+const path = require("path");
 const app = express();
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
@@ -22,11 +25,14 @@ const userRoutes = require("./routes/user.routes");
 const classRoutes = require("./routes/class.routes");
 const studentRoutes = require("./routes/student.routes");
 const searchRoutes = require("./routes/search.routes");
+const centerRoutes = require("./routes/center.routes");
 
 app.use("/v1/api/auth", authRoutes);
 app.use("/v1/api/user", userRoutes);
 app.use("/v1/api/classes", classRoutes);
 app.use("/v1/api/students", studentRoutes);
 app.use("/v1/api/search", searchRoutes);
+app.use("/v1/api/center", centerRoutes);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 module.exports = app;

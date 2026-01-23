@@ -2,7 +2,7 @@
 
 .cd-wrap {
     background: var(--bg);
-    border-radius: 16px;
+    border-radius: 10px;
     padding: 18px;
     min-height: calc(100vh - 64px - 32px);
 }

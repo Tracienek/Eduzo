@@ -1,8 +1,8 @@
-// src/page/auth/SignUp.jsx
+// src/pages/auth/SignUp.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiUtils } from "../../utils/newRequest"; // chỉnh path đúng project bạn
-import "./auth.css";
+import { apiUtils, tokenStore } from "../../utils/newRequest";
+import { useAuth } from "../../context/auth/AuthContext";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const unwrap = (res) => {
@@ -10,8 +10,12 @@ const unwrap = (res) => {
     return root?.metadata ?? root?.data ?? root;
 };
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 export default function SignUp() {
     const navigate = useNavigate();
+    const { loadUserMe } = useAuth();
+
     const [showPassword, setShowPassword] = useState(false);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,7 +25,6 @@ export default function SignUp() {
         fullName: "",
         password: "",
         confirmPassword: "",
-        centers: "", // nếu BE cần
     });
 
     const onChange = (e) => {
@@ -32,17 +35,22 @@ export default function SignUp() {
 
     const validateInputs = () => {
         const errs = {};
+        const email = inputs.email.trim().toLowerCase();
+
         if (!inputs.fullName.trim())
             errs.fullName = "Please enter your full name";
-        if (!inputs.email.trim()) errs.email = "Please enter your email";
-        if (!inputs.password.trim()) errs.password = "Please enter a password";
-        if (!inputs.confirmPassword.trim())
+
+        if (!email) errs.email = "Please enter your email";
+        else if (!isValidEmail(email)) errs.email = "Invalid email format";
+
+        if (!inputs.password) errs.password = "Please enter a password";
+        else if (inputs.password.length < 8)
+            errs.password = "Password must be at least 8 characters";
+
+        if (!inputs.confirmPassword)
             errs.confirmPassword = "Please confirm your password";
         else if (inputs.confirmPassword !== inputs.password)
             errs.confirmPassword = "Passwords do not match";
-
-        if (!inputs.centers?.toString().trim())
-            errs.centers = "Please select centers count";
 
         return errs;
     };
@@ -63,21 +71,18 @@ export default function SignUp() {
                 email: inputs.email.trim().toLowerCase(),
                 fullName: inputs.fullName.trim(),
                 password: inputs.password,
-                centers: inputs.centers,
             };
 
             const res = await apiUtils.post("/auth/signUp", payload);
             const data = unwrap(res);
 
-            // nếu BE trả OTP flow:
-            // navigate("/auth/verification", { state: { email: inputs.email } });
+            const token = data?.accessToken || data?.token;
+            if (token) tokenStore.set(token);
 
-            // nếu BE sign up xong cho login luôn:
-            // const token = data?.accessToken || data?.token;
-            // if (token) localStorage.setItem("token", token);
+            // ✅ this is what makes UI update immediately (no reload)
+            await loadUserMe();
 
-            // mặc định: về sign-in
-            navigate("/auth/signIn");
+            navigate("/workspace");
         } catch (err) {
             setErrors({
                 serverError:
@@ -93,7 +98,7 @@ export default function SignUp() {
     return (
         <>
             <h2 className="auth-title">Sign Up</h2>
-            <p className="auth-subtitle">Create your account</p>
+            <p className="auth-subtitle">Create your center account</p>
 
             <form className="auth-form" onSubmit={onSubmit}>
                 <div className="auth-field">
@@ -108,7 +113,10 @@ export default function SignUp() {
                             placeholder="Enter your full name"
                             value={inputs.fullName}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${
+                                errors.fullName ? "error" : ""
+                            }`}
+                            autoComplete="name"
                         />
                     </div>
                     <p
@@ -132,35 +140,14 @@ export default function SignUp() {
                             placeholder="Enter your email"
                             value={inputs.email}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${
+                                errors.email ? "error" : ""
+                            }`}
+                            autoComplete="email"
                         />
                     </div>
                     <p className={`auth-error ${errors.email ? "show" : ""}`}>
                         {errors.email}
-                    </p>
-                </div>
-
-                {/* centers: nếu BE cần */}
-                <div className="auth-field">
-                    <label className="auth-label">Centers</label>
-                    <div className="auth-input-wrap">
-                        <span className="auth-input-icon">
-                            <i className="fa-solid fa-building" />
-                        </span>
-                        <select
-                            name="centers"
-                            value={inputs.centers}
-                            onChange={onChange}
-                            className="auth-input"
-                        >
-                            <option value="">Select centers count</option>
-                            <option value="1">1-2 center</option>
-                            <option value="2">3-5 centers</option>
-                            <option value="3">5+ centers</option>
-                        </select>
-                    </div>
-                    <p className={`auth-error ${errors.centers ? "show" : ""}`}>
-                        {errors.centers}
                     </p>
                 </div>
 
@@ -176,7 +163,10 @@ export default function SignUp() {
                             placeholder="Enter your password"
                             value={inputs.password}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${
+                                errors.password ? "error" : ""
+                            }`}
+                            autoComplete="new-password"
                         />
                         <button
                             type="button"
@@ -212,7 +202,10 @@ export default function SignUp() {
                             placeholder="Confirm your password"
                             value={inputs.confirmPassword}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${
+                                errors.confirmPassword ? "error" : ""
+                            }`}
+                            autoComplete="new-password"
                         />
                     </div>
                     <p
@@ -238,7 +231,7 @@ export default function SignUp() {
 
                 <div className="auth-footer">
                     <span>Already have an account? </span>
-                    <Link className="auth-link" to="/auth/signIn">
+                    <Link className="auth-link" to="/auth/signin">
                         Sign in
                     </Link>
                 </div>

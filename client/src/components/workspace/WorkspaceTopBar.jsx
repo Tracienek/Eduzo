@@ -1,14 +1,10 @@
-// WorkspaceTopBar.jsx
+// components/workspace/WorkspaceTopBar.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./WorkspaceTopBar.css";
 import { useAuth } from "../../context/auth/AuthContext";
 import { apiUtils } from "../../utils/newRequest";
 import CreateClass from "../../pages/workspace/classes/createModal/CreateClass";
-
-// NOTE: WorkspaceTopBar KHÔNG dùng socket trực tiếp.
-// Socket (nếu có) nằm trong AuthContext.jsx.
-// Nếu bạn đang bị /socket.io 404 hoặc web xoay liên tục, hãy tắt socket ở AuthContext.
 
 export default function WorkspaceTopBar() {
     const { userInfo, logout } = useAuth();
@@ -128,13 +124,12 @@ export default function WorkspaceTopBar() {
     }, []);
 
     /* ============ AVATAR FIX (NO FLICKER) ============ */
-    // Lý do avatar chớp nháy: src bị set về URL lỗi mỗi render,
-    // onError lại set placeholder, rồi render lại -> loop.
-    // Fix: dùng state avatarSrc và chỉ fallback 1 lần.
     const FALLBACK_AVATAR = "https://via.placeholder.com/40";
     const [avatarSrc, setAvatarSrc] = useState(FALLBACK_AVATAR);
 
     useEffect(() => {
+        // NOTE: bạn đang dùng userInfo?.avatar (field name)
+        // Nếu sau này bạn đổi backend thành avatarUrl thì đổi ở đây theo.
         setAvatarSrc(userInfo?.avatar || FALLBACK_AVATAR);
     }, [userInfo?.avatar]);
 
@@ -305,23 +300,14 @@ export default function WorkspaceTopBar() {
 
                             <div className="workspace-user-divider" />
 
+                            {/* ✅ Account -> Profile page */}
                             <Link
-                                to={`/user/${userInfo?._id}`}
+                                to="/workspace/profile"
                                 className="workspace-user-item"
                                 onClick={() => setUserOpen(false)}
                             >
                                 Account
                             </Link>
-
-                            {role === "student" && (
-                                <Link
-                                    to="/workspace/feedback"
-                                    className="workspace-user-item"
-                                    onClick={() => setUserOpen(false)}
-                                >
-                                    Give feedback
-                                </Link>
-                            )}
 
                             <button
                                 className="workspace-user-item danger"

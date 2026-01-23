@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../utils/newRequest";
 import "./ClassesPage.css";
-import { useTranslation } from "react-i18next";
 
 function ClassCard({ c, onOpen, onDelete }) {
     const isOnline = !!c?.isOnline;
@@ -37,7 +36,7 @@ function ClassCard({ c, onOpen, onDelete }) {
                     type="button"
                     title="Delete class"
                     onClick={(e) => {
-                        e.stopPropagation(); // quan trọng: không trigger open
+                        e.stopPropagation();
                         onDelete?.(c);
                     }}
                 >
@@ -79,7 +78,6 @@ export default function ClassesPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [classes, setClasses] = useState([]);
-    const { t, i18n } = useTranslation();
 
     const fetchClasses = async (setLoadingFlag = false) => {
         try {
@@ -152,7 +150,7 @@ export default function ClassesPage() {
         <div className="classes-page">
             {/* ===== Online Class Section ===== */}
             <div className="classes-page-header">
-                <h2>{t("classes.online")}</h2>
+                <h2>Online Class</h2>
             </div>
 
             {loading && <div className="classes-muted">Loading...</div>}

@@ -1,18 +1,14 @@
-// src/page/auth/SignIn.jsx
-
+// src/pages/auth/SignIn.jsx
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { apiUtils } from "../../utils/newRequest";
+import { useAuth } from "../../context/auth/AuthContext";
 import "./auth.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
-const unwrap = (res) => {
-    const root = res?.data ?? res;
-    return root?.metadata ?? root?.data ?? root;
-};
-
 export default function SignIn() {
     const nav = useNavigate();
+    const { login } = useAuth();
+
     const [showPassword, setShowPassword] = useState(false);
     const [isSubmitLoginLoading, setIsSubmitLoginLoading] = useState(false);
     const [errors, setErrors] = useState({});
@@ -43,23 +39,21 @@ export default function SignIn() {
         }
 
         try {
-            const payload = {
-                email: inputs.email.trim().toLowerCase(),
-                password: inputs.password,
-            };
+            const email = inputs.email.trim().toLowerCase();
+            const password = inputs.password;
 
-            const res = await apiUtils.post("/auth/signIn", payload);
-            const data = unwrap(res);
+            const result = await login(email, password);
 
-            const user = data?.user ?? data?.account ?? data;
-
-            const token = data?.accessToken || data?.token;
-            if (token) localStorage.setItem("accessToken", token);
-
-            if (user?.role === "teacher") {
-                nav("/workspace");
+            if (!result?.success) {
+                setErrors({ serverError: "Invalid email or password" });
                 return;
             }
+
+            // Optional: force teacher to change password (if you want)
+            // if (result.user?.mustChangePassword) {
+            //     nav("/workspace/profile?forceChange=1");
+            //     return;
+            // }
 
             nav("/workspace");
         } catch (err) {
@@ -142,9 +136,10 @@ export default function SignIn() {
 
                 <div className="auth-row">
                     <span />
-                    <a className="auth-link" href="#">
+                    {/* If you haven't built this page yet, keep "#" or remove */}
+                    <Link className="auth-link" to="/auth/forgot-password">
                         Forgot your password?
-                    </a>
+                    </Link>
                 </div>
 
                 <button

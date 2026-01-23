@@ -9,6 +9,31 @@ const pad2 = (n) => String(n).padStart(2, "0");
 const toISODate = (d) =>
     `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
+// ✅ same style as ClassDetailPage
+const isoToDMY = (iso) => {
+    if (!iso) return "";
+    const [y, m, d] = iso.split("-");
+    if (!y || !m || !d) return "";
+    return `${d}/${m}/${y}`;
+};
+
+const dmyToISO = (dmy) => {
+    // allow 1-2 digits like 2/1/2026 or 02/01/2026
+    const m = dmy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (!m) return null;
+    let [, dd, mm, yyyy] = m;
+    dd = String(dd).padStart(2, "0");
+    mm = String(mm).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+const normalizeDMYTyping = (v) => {
+    let s = v.replace(/[^\d/]/g, "").slice(0, 10);
+    s = s.replace(/^(\d{2})(\d)/, "$1/$2");
+    s = s.replace(/^(\d{2}\/\d{2})(\d)/, "$1/$2");
+    return s;
+};
+
 const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const WEEKDAY_MAP = {
@@ -84,7 +109,11 @@ export default function FullAttendancePage() {
     const [cls, setCls] = useState(null);
     const [error, setError] = useState("");
 
+    // keep ISO in state (like startDate in ClassDetailPage)
     const [monthISO, setMonthISO] = useState(() => toISODate(new Date()));
+    // text shown to user (dd/mm/yyyy)
+    const [displayMonth, setDisplayMonth] = useState(() => isoToDMY(monthISO));
+
     const [records, setRecords] = useState({});
 
     /** ===== load class ===== */
@@ -116,6 +145,11 @@ export default function FullAttendancePage() {
         };
     }, [classId]);
 
+    // sync display when ISO changes
+    useEffect(() => {
+        setDisplayMonth(isoToDMY(monthISO));
+    }, [monthISO]);
+
     const weekdays = useMemo(
         () => parseWeekdays(cls?.scheduleText || "Mon, Wed, Fri - 9:00 AM"),
         [cls?.scheduleText]
@@ -139,7 +173,6 @@ export default function FullAttendancePage() {
         [sessionDates]
     );
 
-    // same width for A/B in each student card
     const maxCols = useMemo(
         () => Math.max(datesA.length, datesB.length, 1),
         [datesA.length, datesB.length]
@@ -299,13 +332,67 @@ export default function FullAttendancePage() {
                 <div className="fa-actions">
                     <div className="fa-filter">
                         <label className="fa-label">Month</label>
-                        <input
-                            className="fa-date"
-                            type="date"
-                            value={monthISO}
-                            onChange={(e) => setMonthISO(e.target.value)}
-                            title="Pick any date in the month"
-                        />
+
+                        <div className="fa-date-input">
+                            <input
+                                className="fa-date-text"
+                                type="text"
+                                inputMode="numeric"
+                                placeholder="dd/mm/yyyy"
+                                value={displayMonth}
+                                onChange={(e) => {
+                                    const v = normalizeDMYTyping(
+                                        e.target.value
+                                    );
+                                    setDisplayMonth(v);
+
+                                    const iso = dmyToISO(v);
+                                    if (iso) setMonthISO(iso);
+                                }}
+                                onBlur={() => {
+                                    const iso = dmyToISO(displayMonth);
+                                    if (!iso)
+                                        setDisplayMonth(isoToDMY(monthISO));
+                                }}
+                            />
+
+                            <input
+                                id="monthPicker"
+                                className="fa-real-date"
+                                type="date"
+                                value={monthISO}
+                                onChange={(e) => setMonthISO(e.target.value)}
+                                title="Pick any date in the month"
+                            />
+
+                            <button
+                                type="button"
+                                className="fa-date-icon-btn"
+                                onClick={() => {
+                                    const el =
+                                        document.getElementById("monthPicker");
+                                    if (!el) return;
+                                    if (el.showPicker) el.showPicker();
+                                    else el.focus();
+                                }}
+                                aria-label="Open date picker"
+                            >
+                                <svg viewBox="0 0 24 24" fill="none">
+                                    <path
+                                        d="M8 2v3M16 2v3M3.5 9h17M6 6h12a2.5 2.5 0 0 1 2.5 2.5v11A2.5 2.5 0 0 1 18 22H6a2.5 2.5 0 0 1-2.5-2.5v-11A2.5 2.5 0 0 1 6 6Z"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinecap="round"
+                                    />
+                                    <path
+                                        d="M7.5 12.5h3v3h-3v-3Z"
+                                        stroke="currentColor"
+                                        strokeWidth="1.8"
+                                        strokeLinejoin="round"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -315,7 +402,7 @@ export default function FullAttendancePage() {
                 (based on schedule). Read-only.
             </div>
 
-            {/* CARD LIST like image 2 */}
+            {/* CARD LIST */}
             <div className="fa-cards">
                 {students.map((s, idx) => {
                     const sid = normalizeStudentId(s, idx);
@@ -337,7 +424,6 @@ export default function FullAttendancePage() {
                                     </thead>
 
                                     <tbody>
-                                        {/* Row: checkbox A */}
                                         <tr className="fa-row-a">
                                             <td className="fa-col-no">
                                                 {idx + 1}
@@ -357,14 +443,12 @@ export default function FullAttendancePage() {
                                             {renderBodyCells(sid, datesA)}
                                         </tr>
 
-                                        {/* Sub header: datesB */}
                                         <tr className="fa-subhead">
                                             <td className="fa-subhead-left" />
                                             <td className="fa-subhead-left" />
                                             {renderHeaderCells(datesB, "td")}
                                         </tr>
 
-                                        {/* Row: checkbox B */}
                                         <tr className="fa-row-b">
                                             <td className="fa-subhead-left" />
                                             <td className="fa-subhead-left" />
