@@ -1,3 +1,5 @@
+// server/src/models/Class.js
+
 const mongoose = require("mongoose");
 
 const ClassSchema = new mongoose.Schema(
@@ -14,7 +16,7 @@ const ClassSchema = new mongoose.Schema(
 
         durationMinutes: { type: Number, default: 90 },
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 module.exports = mongoose.models.Class || mongoose.model("Class", ClassSchema);

@@ -61,6 +61,12 @@ export const AuthProvider = ({ children }) => {
     // 2) Fetch userInfo on mount
     // --------------------------------------------------
     const loadUserMe = async () => {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+            setUserInfo(null);
+            setLoading(false);
+            return null;
+        }
         try {
             const res = await newRequest.get("/user/me");
             const user = res.data.metadata.user;

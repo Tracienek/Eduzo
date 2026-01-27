@@ -28,16 +28,23 @@ newRequest.interceptors.request.use(
         }
         return config;
     },
-    (error) => Promise.reject(error)
+    (error) => Promise.reject(error),
 );
 
 // optional: clear token on 401
 newRequest.interceptors.response.use(
     (res) => res,
     (err) => {
-        if (err?.response?.status === 401) tokenStore.clear();
+        const status = err?.response?.status;
+        const msg = err?.response?.data?.message;
+
+        // Chỉ clear khi token sai/hết hạn (tuỳ backend bạn trả message gì)
+        if (status === 401 && msg && msg.toLowerCase().includes("invalid")) {
+            tokenStore.clear();
+        }
+
         return Promise.reject(err);
-    }
+    },
 );
 
 const getLoggedInRequestConfig = (data) => {

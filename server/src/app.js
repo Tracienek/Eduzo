@@ -8,9 +8,11 @@ const mongoose = require("mongoose");
 
 const path = require("path");
 const app = express();
+const cookieParser = require("cookie-parser");
 
 app.use(cors({ origin: process.env.CLIENT_URL, credentials: true }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan("dev"));
 
 mongoose
@@ -34,5 +36,6 @@ app.use("/v1/api/students", studentRoutes);
 app.use("/v1/api/search", searchRoutes);
 app.use("/v1/api/center", centerRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+app.use("/v1/api/notifications", require("./routes/notification.routes"));
 
 module.exports = app;

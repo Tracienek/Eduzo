@@ -24,6 +24,7 @@ import FullAttendancePage from "./pages/workspace/classes/attendance/FullAttenda
 import TeachersPanel from "./pages/workspace/teachers/TeacherPage.jsx";
 import ProfilePage from "./pages/workspace/profile/ProfilePage.jsx";
 import TeacherDetail from "./pages/workspace/teachers/teacherDetail/TeacherDetail.jsx";
+import NotificationsPage from "./pages/workspace/notification/Notification.jsx";
 
 const router = createBrowserRouter([
     {
@@ -64,6 +65,7 @@ const router = createBrowserRouter([
             },
 
             { path: "profile", element: <ProfilePage /> },
+            { path: "notifications", element: <NotificationsPage /> },
         ],
     },
 ]);

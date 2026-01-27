@@ -1,3 +1,4 @@
+// server/src/controllers/class.controller.js
 const Class = require("../models/Class");
 const Student = require("../models/Student");
 const Attendance = require("../models/Attendance");
@@ -182,7 +183,7 @@ exports.pingOnline = async (req, res) => {
         const updated = await Class.findByIdAndUpdate(
             classId,
             { $set: { isOnline: true, onlineUntil } },
-            { new: true }
+            { new: true },
         ).lean();
 
         return res.json({

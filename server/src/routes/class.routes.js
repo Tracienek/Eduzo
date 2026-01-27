@@ -1,3 +1,5 @@
+// server/src/routes/class.routes.js
+
 const router = require("express").Router();
 const ctrl = require("../controllers/class.controller");
 const attendanceController = require("../controllers/attendance.controller");
@@ -19,6 +21,7 @@ router.patch("/:id/attendance/bulk", attendanceController.bulkSaveAttendance);
 router.delete("/:id", ctrl.deleteClass);
 
 router.get("/:id/notes", authMiddleware, noteCtrl.listByClass);
+// router.get("/:id/notes/:noteId", authMiddleware, noteCtrl.getById);
 router.post("/:id/notes", authMiddleware, noteCtrl.create);
 
 module.exports = router;

@@ -9,5 +9,8 @@ router.use("/user", require("./user.routes"));
 router.use("/classes", require("./class.routes"));
 router.use("/students", require("./student.routes"));
 router.use("/search", require("./search.routes"));
+router.use("/center", require("./center.routes"));
+router.use("/class-notes", require("./classNote.routes"));
+router.use("/notifications", require("./notification.routes"));
 
 module.exports = router;

@@ -1,38 +1,33 @@
+// server/src/models/ClassNote.js
 const mongoose = require("mongoose");
+const { Schema } = mongoose;
 
-const ClassNoteSchema = new mongoose.Schema(
+const ClassNoteSchema = new Schema(
     {
         classId: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref: "Class",
             required: true,
             index: true,
         },
 
-        fromRole: {
-            type: String,
-            enum: ["teacher", "center"],
-            required: true,
-            index: true,
-        },
-        toRole: {
-            type: String,
-            enum: ["teacher", "center"],
-            required: true,
-            index: true,
-        },
+        content: { type: String, required: true, trim: true },
 
         fromUserId: {
-            type: mongoose.Schema.Types.ObjectId,
+            type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
         },
-        message: { type: String, required: true, trim: true, maxlength: 1000 },
+        fromRole: { type: String, enum: ["teacher", "center"], required: true },
+        toRole: { type: String, enum: ["teacher", "center"], required: true },
 
-        isRead: { type: Boolean, default: false, index: true },
+        // để bạn filter theo center (rất hợp với logic bạn đang làm)
+        centerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     },
-    { timestamps: true }
+    { timestamps: true }, // createdAt, updatedAt
 );
 
-module.exports =
-    mongoose.models.ClassNote || mongoose.model("ClassNote", ClassNoteSchema);
+// newest -> oldest cho 1 lớp
+ClassNoteSchema.index({ classId: 1, createdAt: -1 });
+
+module.exports = mongoose.model("ClassNote", ClassNoteSchema);

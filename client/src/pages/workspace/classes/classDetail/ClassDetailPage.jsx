@@ -116,7 +116,7 @@ export default function ClassDetailPage() {
     const [startDate, setStartDate] = useState(() => {
         const now = new Date();
         return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(
-            now.getDate()
+            now.getDate(),
         )}`;
     });
 
@@ -192,7 +192,7 @@ export default function ClassDetailPage() {
 
     const weekdays = useMemo(
         () => parseWeekdays(cls?.scheduleText || "Mon, Wed, Fri - 9:00 AM"),
-        [cls?.scheduleText]
+        [cls?.scheduleText],
     );
 
     const sessionDates = useMemo(() => {
@@ -205,7 +205,7 @@ export default function ClassDetailPage() {
 
     const dateKeys = useMemo(
         () => sessionDates.map(toLocalISODate),
-        [sessionDates]
+        [sessionDates],
     );
 
     /** ===== fetch attendance records ===== */
@@ -217,7 +217,7 @@ export default function ClassDetailPage() {
         (async () => {
             try {
                 const res = await apiUtils.get(
-                    `/classes/${classId}/attendance?dates=${dateKeys.join(",")}`
+                    `/classes/${classId}/attendance?dates=${dateKeys.join(",")}`,
                 );
                 const records = res?.data?.metadata?.records || [];
                 if (!alive) return;
@@ -358,7 +358,7 @@ export default function ClassDetailPage() {
         });
 
         const tuitionChanges = Object.entries(pendingTuition).map(
-            ([studentId, tuition]) => ({ studentId, tuition: !!tuition })
+            ([studentId, tuition]) => ({ studentId, tuition: !!tuition }),
         );
 
         if (!changes.length && !tuitionChanges.length) {
@@ -376,7 +376,8 @@ export default function ClassDetailPage() {
         } catch (err) {
             console.error(err);
             alert(
-                err?.response?.data?.message || "Save failed. Please try again."
+                err?.response?.data?.message ||
+                    "Save failed. Please try again.",
             );
         }
     };
@@ -462,7 +463,7 @@ export default function ClassDetailPage() {
         ? DAY_NAME[nextSession.getDay()]
         : "";
     const nextSessionTimeLabel = extractTimeFromSchedule(
-        cls?.scheduleText || ""
+        cls?.scheduleText || "",
     );
     const nextSessionSubLabel = nextSession
         ? `${fmtDMY(nextSession)}${
@@ -593,7 +594,7 @@ export default function ClassDetailPage() {
                                     value={displayDate}
                                     onChange={(e) => {
                                         const v = normalizeDMYTyping(
-                                            e.target.value
+                                            e.target.value,
                                         );
                                         setDisplayDate(v);
 
@@ -623,7 +624,7 @@ export default function ClassDetailPage() {
                                     onClick={() => {
                                         const el =
                                             document.getElementById(
-                                                "datePicker"
+                                                "datePicker",
                                             );
                                         if (!el) return;
                                         if (el.showPicker) el.showPicker();
@@ -708,13 +709,13 @@ export default function ClassDetailPage() {
                                                                 studentId,
                                                                 "attendance",
                                                                 dk,
-                                                                val
+                                                                val,
                                                             );
 
                                                             markAttendancePending(
                                                                 studentId,
                                                                 dk,
-                                                                val
+                                                                val,
                                                             );
                                                         }}
                                                     />
@@ -738,12 +739,12 @@ export default function ClassDetailPage() {
                                                                 studentId,
                                                                 "homework",
                                                                 dk,
-                                                                val
+                                                                val,
                                                             );
                                                             markHomeworkPending(
                                                                 studentId,
                                                                 dk,
-                                                                val
+                                                                val,
                                                             );
                                                         }}
                                                     />
@@ -767,11 +768,11 @@ export default function ClassDetailPage() {
                                                         studentId,
                                                         "tuition",
                                                         null,
-                                                        val
+                                                        val,
                                                     );
                                                     markTuitionPending(
                                                         studentId,
-                                                        val
+                                                        val,
                                                     );
                                                 }}
                                             />
@@ -825,26 +826,11 @@ export default function ClassDetailPage() {
                 )}
             </div>
 
-            {/* ===== NOTES (Teacher <-> Center only) ===== */}
+            {/* ===== NOTES  ===== */}
             {canUseNotes && (
                 <div className="cd-section">
                     <div className="cd-section-head">
-                        <h2>
-                            Notes{" "}
-                            <span
-                                style={{
-                                    fontSize: 12,
-                                    fontWeight: 800,
-                                    color: "rgba(0,0,0,.55)",
-                                }}
-                            >
-                                (
-                                {role === "teacher"
-                                    ? "Teacher → Center"
-                                    : "Center → Teacher"}
-                                )
-                            </span>
-                        </h2>
+                        <h2>Notes </h2>
                     </div>
 
                     <div className="cd-note-box">
@@ -888,13 +874,12 @@ export default function ClassDetailPage() {
                                     <span className="cd-note-time">
                                         {n?.createdAt
                                             ? new Date(
-                                                  n.createdAt
+                                                  n.createdAt,
                                               ).toLocaleString()
                                             : ""}
                                     </span>
                                 </div>
 
-                                {/* ✅ IMPORTANT: use n.content */}
                                 <div className="cd-note-msg">
                                     {n.content || ""}
                                 </div>
