@@ -6,6 +6,10 @@ import "./ClassDetailPage.css";
 import CreateStudent from "../createModal/CreateStudent";
 import { useAuth } from "../../../../context/auth/AuthContext";
 
+// ✅ NEW: panels
+import NotesPanel from "./NotesPanel/NotesPanel";
+import FeedbackPanel from "./FeedbackPanel/FeedbackPanel";
+
 /** ---------- helpers ---------- **/
 const pad2 = (n) => String(n).padStart(2, "0");
 const fmtDMY = (d) =>
@@ -106,7 +110,7 @@ export default function ClassDetailPage() {
     const { classId } = useParams();
     const navigate = useNavigate();
     const { userInfo } = useAuth();
-    const role = userInfo?.role; // "teacher" | "center" | "student"
+    const role = userInfo?.role; // "teacher" | "center"
     const canUseNotes = role === "teacher" || role === "center";
 
     const [openStudent, setOpenStudent] = useState(false);
@@ -129,11 +133,6 @@ export default function ClassDetailPage() {
     const [pendingAttendance, setPendingAttendance] = useState({});
     const [pendingHomework, setPendingHomework] = useState({});
     const [pendingTuition, setPendingTuition] = useState({});
-
-    /** ========= NOTES ========= */
-    const [notes, setNotes] = useState([]);
-    const [noteText, setNoteText] = useState("");
-    const [noteLoading, setNoteLoading] = useState(false);
 
     const ensureStudentState = (studentId, base) => {
         if (base[studentId]) return base;
@@ -388,73 +387,6 @@ export default function ClassDetailPage() {
         exitAttendanceEditMode();
     };
 
-    /** ===== NOTES: fetch & submit (teacher <-> center only) ===== */
-    useEffect(() => {
-        if (!classId) return;
-        if (!canUseNotes) return;
-
-        let alive = true;
-
-        (async () => {
-            try {
-                const res = await apiUtils.get(`/classes/${classId}/notes`);
-                const list =
-                    res?.data?.metadata?.notes ||
-                    res?.data?.notes ||
-                    res?.data?.metadata ||
-                    [];
-                if (!alive) return;
-                setNotes(Array.isArray(list) ? list : []);
-            } catch {
-                if (alive) setNotes([]);
-            }
-        })();
-
-        return () => {
-            alive = false;
-        };
-    }, [classId, canUseNotes]);
-
-    const submitNote = async () => {
-        if (!canUseNotes) return;
-
-        const content = noteText.trim();
-        if (!content) {
-            alert("content is required");
-            return;
-        }
-
-        const toRole = role === "teacher" ? "center" : "teacher";
-
-        try {
-            setNoteLoading(true);
-
-            const res = await apiUtils.post(`/classes/${classId}/notes`, {
-                content, // ✅ MUST be `content`
-                toRole, // ✅ teacher -> center | center -> teacher
-            });
-
-            const created =
-                res?.data?.metadata?.note || res?.data?.note || null;
-
-            // optimistic prepend (fallback if BE returns nothing)
-            const fallback = {
-                _id: `tmp-${Date.now()}`,
-                content,
-                fromRole: role,
-                toRole,
-                createdAt: new Date().toISOString(),
-            };
-
-            setNotes((prev) => [created || fallback, ...prev]);
-            setNoteText("");
-        } catch (e) {
-            alert(e?.response?.data?.message || "Send note failed");
-        } finally {
-            setNoteLoading(false);
-        }
-    };
-
     if (loading) return <div className="cd-muted">Loading...</div>;
     if (!cls) return <div className="cd-muted">Class not found</div>;
 
@@ -577,6 +509,7 @@ export default function ClassDetailPage() {
                 </div>
             </div>
 
+            {/* ===== STUDENTS + MINI ATTENDANCE TABLE (3 sessions) ===== */}
             <div className="cd-section">
                 <div className="cd-section-head">
                     <h2>Students</h2>
@@ -826,68 +759,18 @@ export default function ClassDetailPage() {
                 )}
             </div>
 
-            {/* ===== NOTES  ===== */}
+            {/* ===== NOTES PANEL ===== */}
             {canUseNotes && (
-                <div className="cd-section">
-                    <div className="cd-section-head">
-                        <h2>Notes </h2>
-                    </div>
-
-                    <div className="cd-note-box">
-                        <textarea
-                            className="cd-note-input"
-                            rows={3}
-                            value={noteText}
-                            onChange={(e) => setNoteText(e.target.value)}
-                            placeholder={
-                                role === "teacher"
-                                    ? "Write a note for Center (shows in Center notifications)..."
-                                    : "Write a note for Teacher (shows in Teacher notifications)..."
-                            }
-                        />
-
-                        <div className="cd-note-actions">
-                            <button
-                                type="button"
-                                className="cd-btn"
-                                onClick={submitNote}
-                                disabled={!noteText.trim() || noteLoading}
-                            >
-                                {noteLoading ? "Sending..." : "Send note"}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div className="cd-note-list">
-                        {notes.length === 0 && (
-                            <div className="cd-empty" style={{ marginTop: 10 }}>
-                                No notes yet
-                            </div>
-                        )}
-
-                        {notes.map((n) => (
-                            <div className="cd-note-item" key={n._id}>
-                                <div className="cd-note-meta">
-                                    <span className="cd-note-role">
-                                        {n.fromRole} → {n.toRole}
-                                    </span>
-                                    <span className="cd-note-time">
-                                        {n?.createdAt
-                                            ? new Date(
-                                                  n.createdAt,
-                                              ).toLocaleString()
-                                            : ""}
-                                    </span>
-                                </div>
-
-                                <div className="cd-note-msg">
-                                    {n.content || ""}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                <NotesPanel
+                    classId={classId}
+                    role={role}
+                    userInfo={userInfo}
+                    classNameValue={cls?.name || cls?.className || ""}
+                />
             )}
+
+            {/* ===== FEEDBACK PANEL (QR) ===== */}
+            <FeedbackPanel classId={classId} role={role} userInfo={userInfo} />
         </div>
     );
 }

@@ -9,6 +9,13 @@ const ClassSchema = new mongoose.Schema(
         scheduleText: String,
         students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
 
+        centerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            index: true,
+            default: null,
+        },
+
         isActive: { type: Boolean, default: true, index: true },
 
         isOnline: { type: Boolean, default: false, index: true },

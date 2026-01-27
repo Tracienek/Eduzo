@@ -3,6 +3,8 @@ const Class = require("../models/Class");
 const Student = require("../models/Student");
 const Attendance = require("../models/Attendance");
 
+const getMyId = (req) => req.user?.userId || req.user?._id;
+
 exports.getAvailable = async (req, res) => {
     try {
         const list = await Class.find({ isActive: true })
@@ -39,6 +41,25 @@ exports.createClass = async (req, res) => {
                 .json({ message: "name and subject are required" });
         }
 
+        // ✅ derive centerId from auth user
+        const role = req.user?.role; // "center" | "teacher" | ...
+        const myId = getMyId(req);
+
+        let centerId = null;
+
+        // center creates => centerId = myId
+        if (role === "center") centerId = myId;
+
+        // teacher creates => centerId = teacher.centerId
+        if (role === "teacher") centerId = req.user?.centerId || null;
+
+        // if your system requires centerId always:
+        if (!centerId) {
+            return res.status(400).json({
+                message: "centerId is missing on this account",
+            });
+        }
+
         const created = await Class.create({
             name: name.trim(),
             subject: subject.trim(),
@@ -46,6 +67,9 @@ exports.createClass = async (req, res) => {
             durationMinutes: Number(durationMinutes) || 90,
             students: [],
             isActive: true,
+
+            // ✅ save centerId
+            centerId,
         });
 
         return res.status(201).json({
@@ -150,9 +174,6 @@ exports.setOnline = async (req, res) => {
         const cls = await Class.findById(req.params.id);
         if (!cls) return res.status(404).json({ message: "Class not found" });
 
-        // bạn muốn online nghĩa là gì thì set ở đây.
-        // Hiện schema Class của bạn không có field "online",
-        // nên mình map tạm vào isOnline (hoặc bạn tạo field mới).
         const { isOnline } = req.body || {};
         if (typeof isOnline !== "boolean") {
             return res
@@ -201,8 +222,6 @@ exports.deleteClass = async (req, res) => {
         const cls = await Class.findById(id);
         if (!cls) return res.status(404).json({ message: "Class not found" });
 
-        // (optional) xóa attendance records của lớp
-        // nếu bạn muốn sạch DB
         try {
             await Attendance.deleteMany({ classId: id });
         } catch (_) {}

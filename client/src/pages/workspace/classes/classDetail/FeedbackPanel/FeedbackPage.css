@@ -1,0 +1,103 @@
+/* src/pages/feedback/FeedbackPage.css */
+
+.fbp-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px;
+    background: #2f2f2f;
+}
+
+.fbp-card {
+    width: min(720px, 92vw);
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #ece7ff;
+    padding: 18px;
+}
+
+.fbp-title {
+    font-size: 26px;
+    font-weight: 900;
+    color: #111;
+}
+
+.fbp-sub {
+    margin-top: 6px;
+    color: #6b7280;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.fbp-success {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    font-weight: 800;
+}
+
+.fbp-row {
+    margin-top: 14px;
+}
+
+.fbp-label {
+    font-size: 13px;
+    font-weight: 900;
+    color: rgba(0, 0, 0, 0.7);
+    margin-bottom: 8px;
+}
+
+.fbp-stars {
+    display: flex;
+    gap: 8px;
+}
+
+.fbp-star {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid #ece7ff;
+    background: #fff;
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.fbp-star.on {
+    background: rgba(168, 85, 247, 0.12);
+    border-color: rgba(168, 85, 247, 0.35);
+}
+
+.fbp-textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(139, 92, 246, 0.14);
+    padding: 10px 12px;
+    outline: none;
+    font-weight: 700;
+    resize: vertical;
+}
+
+.fbp-actions {
+    margin-top: 14px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.fbp-btn {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #e6e2ff;
+    background: #fff;
+    cursor: pointer;
+    font-weight: 900;
+}
+
+.fbp-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

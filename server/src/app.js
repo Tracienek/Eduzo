@@ -37,5 +37,6 @@ app.use("/v1/api/search", searchRoutes);
 app.use("/v1/api/center", centerRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/v1/api/notifications", require("./routes/notification.routes"));
+app.use("/v1/api/feedback", require("./routes/feedback.routes"));
 
 module.exports = app;

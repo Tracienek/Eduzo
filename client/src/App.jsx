@@ -25,6 +25,7 @@ import TeachersPanel from "./pages/workspace/teachers/TeacherPage.jsx";
 import ProfilePage from "./pages/workspace/profile/ProfilePage.jsx";
 import TeacherDetail from "./pages/workspace/teachers/teacherDetail/TeacherDetail.jsx";
 import NotificationsPage from "./pages/workspace/notification/Notification.jsx";
+import FeedbackPage from "./pages/workspace/classes/classDetail/FeedbackPanel/FeedbackPage.jsx";
 
 const router = createBrowserRouter([
     {
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
             { path: "verification", element: <Verification /> },
         ],
     },
+    { path: "/feedback/:classId", element: <FeedbackPage /> },
     {
         path: "/workspace",
         element: <WorkspaceLayout />,
@@ -56,6 +58,7 @@ const router = createBrowserRouter([
                 path: "classes/:classId/attendance",
                 element: <FullAttendancePage />,
             },
+
             {
                 path: "teachers",
                 children: [
