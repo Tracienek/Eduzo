@@ -1,3 +1,5 @@
+// server/src/models/Student.js
+
 const mongoose = require("mongoose");
 
 const StudentSchema = new mongoose.Schema(
@@ -6,8 +8,13 @@ const StudentSchema = new mongoose.Schema(
         email: { type: String, required: true, trim: true, lowercase: true },
         dob: { type: String, default: "" },
         homework: { type: Boolean, default: false },
+        classId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Class",
+            default: null,
+        },
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 module.exports =

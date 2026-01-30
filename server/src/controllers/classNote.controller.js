@@ -7,11 +7,9 @@ const Notification = require("../models/Notification");
 const getMyId = (req) => req?.user?.userId || req?.user?._id;
 const toStr = (v) => (v == null ? "" : String(v));
 const uniqStr = (arr) => Array.from(new Set((arr || []).map((x) => String(x))));
+const MAX_NOTES_PER_CLASS = 200;
+const PRUNE_OLDEST_COUNT = 100;
 
-/**
- * GET /v1/api/classes/:id/notes
- * Return notes newest -> oldest
- */
 exports.listByClass = async (req, res) => {
     try {
         const { id: classId } = req.params;
@@ -28,15 +26,6 @@ exports.listByClass = async (req, res) => {
     }
 };
 
-/**
- * POST /v1/api/classes/:id/notes
- * body: { content, toRole }
- *
- * RULE:
- * - Teacher sends -> Center + all teachers (except sender) get notification
- * - Center sends -> all teachers (except sender) get notification
- * - Sender never receives their own notification
- */
 exports.create = async (req, res) => {
     try {
         const myId = getMyId(req);
@@ -61,7 +50,6 @@ exports.create = async (req, res) => {
         const klass = await Class.findById(classId).lean();
         if (!klass) return res.status(404).json({ message: "Class not found" });
 
-        // ✅ FIX: resolve centerId reliably (do NOT rely only on req.user.centerId)
         let centerId = null;
 
         if (role === "center") {
@@ -70,7 +58,6 @@ exports.create = async (req, res) => {
             // role === "teacher"
             centerId = req.user?.centerId;
 
-            // fallback: query DB if token/auth middleware didn't attach centerId
             if (!centerId) {
                 const me = await User.findById(myId)
                     .select("_id centerId role")
@@ -94,8 +81,28 @@ exports.create = async (req, res) => {
             centerId,
         });
 
+        // 1.1) Auto prune old notes if too many
+        try {
+            const total = await ClassNote.countDocuments({ classId });
+
+            if (total > MAX_NOTES_PER_CLASS) {
+                const old = await ClassNote.find({ classId })
+                    .sort({ createdAt: 1 })
+                    .limit(PRUNE_OLDEST_COUNT)
+                    .select("_id")
+                    .lean();
+
+                const oldIds = old.map((x) => x._id);
+
+                if (oldIds.length) {
+                    await ClassNote.deleteMany({ _id: { $in: oldIds } });
+                }
+            }
+        } catch (e) {
+            console.error("auto prune class notes error:", e);
+        }
+
         // 2) Build recipients
-        // get all teachers under this center
         const teachers = await User.find({ role: "teacher", centerId })
             .select("_id")
             .lean();
@@ -124,7 +131,7 @@ exports.create = async (req, res) => {
                 content: text,
                 classId,
                 className: klass.name || klass.className || "",
-                recipients, // mongoose will cast string -> ObjectId
+                recipients,
                 readBy: [],
             });
         }
@@ -136,6 +143,5 @@ exports.create = async (req, res) => {
     }
 };
 
-// Backward-compatible aliases (nếu routes cũ còn gọi)
 exports.createClassNote = exports.create;
 exports.getClassNotes = exports.listByClass;

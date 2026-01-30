@@ -5,7 +5,6 @@
     box-sizing: border-box;
 }
 
-/* ✅ consistent page container like cd-wrap / teachers-panel / td-wrap */
 .noti-wrap {
     width: 100%;
     background: var(--bg);
@@ -43,7 +42,6 @@
     flex-wrap: wrap;
 }
 
-/* ✅ buttons consistent with other pages */
 .noti-btn,
 .noti-btn-primary {
     height: 40px;
@@ -195,6 +193,79 @@
     font-weight: 700;
 }
 
+/* right side group (dot + delete icon) */
+.noti-item-right {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+/* delete icon on each notification (similar UX to class delete) */
+.noti-delete {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid #efeaff;
+    background: #ffd3d3;
+    cursor: pointer;
+    font-weight: 900;
+    color: #ff4545;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.12s ease;
+}
+
+.noti-delete:hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* Delete all button (same row) */
+.noti-btn-danger {
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid #efeaff;
+    background: #ffd3d3;
+    cursor: pointer;
+
+    font-weight: 800;
+    font-size: 13px;
+    color: #ff4545;
+
+    transition:
+        transform 0.16s ease,
+        background 0.16s ease,
+        box-shadow 0.16s ease,
+        color 0.16s ease;
+}
+
+.noti-btn-danger:hover {
+    transform: translateY(-2px);
+    background: var(--danger);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    color: #fff;
+}
+
+.noti-btn-danger:active {
+    transform: translateY(0);
+}
+
+.noti-btn-danger:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 900px) {
     .noti-wrap {
@@ -213,7 +284,6 @@
         border-radius: 12px;
     }
 
-    /* title + actions stack clean */
     .noti-head {
         flex-direction: column;
         align-items: stretch;
@@ -244,7 +314,6 @@
     }
 }
 
-/* reduce motion */
 @media (prefers-reduced-motion: reduce) {
     .noti-btn,
     .noti-btn-primary,

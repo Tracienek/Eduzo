@@ -15,3 +15,13 @@ export const markAllNotificationsRead = async () => {
     const res = await apiUtils.patch(`/notifications/read-all`);
     return res?.data?.metadata || res?.data;
 };
+
+export const deleteNotification = async (id) => {
+    const res = await apiUtils.delete(`/notifications/${id}`);
+    return res?.data?.metadata || res?.data;
+};
+
+export const deleteAllNotifications = async () => {
+    const res = await apiUtils.delete(`/notifications/delete-all`);
+    return res?.data?.metadata || res?.data;
+};

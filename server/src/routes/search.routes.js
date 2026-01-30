@@ -1,3 +1,5 @@
+// server/src/routes/search.routes.js
+
 const router = require("express").Router();
 const ctrl = require("../controllers/search.controller");
 

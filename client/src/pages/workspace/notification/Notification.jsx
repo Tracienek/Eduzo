@@ -6,8 +6,12 @@ import {
     getMyNotifications,
     markAllNotificationsRead,
     markNotificationRead,
+    deleteNotification,
+    deleteAllNotifications,
 } from "../../../services/notificationService";
+
 import "./Notification.css";
+import { apiUtils } from "../../../utils/newRequest";
 
 const getMyId = (userInfo) => userInfo?._id || userInfo?.userId;
 
@@ -37,7 +41,43 @@ export default function NotificationsPage() {
     const isRead = (n) =>
         myId ? (n.readBy || []).some((x) => String(x) === String(myId)) : false;
 
+    // ===== delete one notification =====
+    const deleteOne = async (n) => {
+        const ok = window.confirm(
+            "Delete this notification?\nThis action cannot be undone.",
+        );
+        if (!ok) return;
+
+        try {
+            await deleteNotification(n._id);
+            setItems((prev) => prev.filter((x) => x._id !== n._id));
+        } catch (err) {
+            alert(
+                err?.response?.data?.message || "Failed to delete notification",
+            );
+        }
+    };
+
+    // ===== delete all notifications =====
+    const deleteAll = async () => {
+        const ok = window.confirm(
+            "Delete ALL notifications?\nThis action cannot be undone.",
+        );
+        if (!ok) return;
+
+        try {
+            await deleteAllNotifications();
+            setItems([]);
+        } catch (err) {
+            alert(
+                err?.response?.data?.message ||
+                    "Failed to delete all notifications",
+            );
+        }
+    };
+
     const openNoti = async (n) => {
+        // mark read locally + api
         if (!isRead(n)) {
             try {
                 await markNotificationRead(n._id);
@@ -53,17 +93,36 @@ export default function NotificationsPage() {
             }
         }
 
-        if (n.classId) navigate(`/workspace/classes/${n.classId}`);
+        // go class detail (if exists)
+        if (n.classId) {
+            try {
+                await apiUtils.get(`/classes/${n.classId}`);
+
+                navigate(`/workspace/classes/${n.classId}`);
+            } catch (err) {
+                alert(
+                    err?.response?.data?.message ||
+                        "Lớp đã bị xóa hoặc không tồn tại.",
+                );
+            }
+        }
     };
 
     const markAll = async () => {
-        await markAllNotificationsRead();
-        if (myId) {
-            setItems((prev) =>
-                prev.map((x) => ({
-                    ...x,
-                    readBy: [...new Set([...(x.readBy || []), myId])],
-                })),
+        try {
+            await markAllNotificationsRead();
+            if (myId) {
+                setItems((prev) =>
+                    prev.map((x) => ({
+                        ...x,
+                        readBy: [...new Set([...(x.readBy || []), myId])],
+                    })),
+                );
+            }
+        } catch (err) {
+            alert(
+                err?.response?.data?.message ||
+                    "Failed to mark all notifications as read",
             );
         }
     };
@@ -91,6 +150,15 @@ export default function NotificationsPage() {
                     >
                         Mark all as read
                     </button>
+
+                    <button
+                        type="button"
+                        className="noti-btn-danger"
+                        onClick={deleteAll}
+                        disabled={loading || !items.length}
+                    >
+                        Delete all
+                    </button>
                 </div>
             </div>
 
@@ -104,12 +172,22 @@ export default function NotificationsPage() {
                 {items.map((n) => {
                     const read = isRead(n);
 
+                    // ✅ IMPORTANT: use div role="button" to avoid nested button warning
                     return (
-                        <button
-                            type="button"
+                        <div
                             key={n._id}
-                            className={`noti-item ${read ? "is-read" : "is-unread"}`}
+                            className={`noti-item ${
+                                read ? "is-read" : "is-unread"
+                            }`}
+                            role="button"
+                            tabIndex={0}
                             onClick={() => openNoti(n)}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                    e.preventDefault();
+                                    openNoti(n);
+                                }
+                            }}
                             title={n.classId ? "Open class detail" : "Open"}
                         >
                             <div className="noti-item-top">
@@ -119,12 +197,27 @@ export default function NotificationsPage() {
                                         : ""}
                                 </div>
 
-                                {!read && (
-                                    <span
-                                        className="noti-dot"
-                                        aria-hidden="true"
-                                    />
-                                )}
+                                <div className="noti-item-right">
+                                    {!read && (
+                                        <span
+                                            className="noti-dot"
+                                            aria-hidden="true"
+                                        />
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        className="noti-delete"
+                                        title="Delete notification"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            deleteOne(n);
+                                        }}
+                                        onKeyDown={(e) => e.stopPropagation()}
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
 
                             {!!n.className && (
@@ -134,7 +227,7 @@ export default function NotificationsPage() {
                             )}
 
                             <div className="noti-item-content">{n.content}</div>
-                        </button>
+                        </div>
                     );
                 })}
             </div>

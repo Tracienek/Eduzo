@@ -126,6 +126,21 @@ export default function TeacherDetail() {
 
     const teacherName = safeText(teacher?.fullName || teacher?.name);
 
+    const handleDeleteTeacher = async () => {
+        const ok = window.confirm(
+            `Delete teacher "${teacherName || "Unnamed"}"?\nThis action cannot be undone.`,
+        );
+        if (!ok) return;
+
+        try {
+            await apiUtils.delete(`/center/teachers/${teacherId}`);
+
+            navigate("/workspace/teachers");
+        } catch (err) {
+            alert(err?.response?.data?.message || "Failed to delete teacher");
+        }
+    };
+
     return (
         <div className="td-wrap">
             <div className="td-topbar">
@@ -140,6 +155,15 @@ export default function TeacherDetail() {
                 <div className="td-title" title={teacherName}>
                     {teacherName}
                 </div>
+
+                <button
+                    className="td-delete"
+                    type="button"
+                    title="Delete teacher"
+                    onClick={handleDeleteTeacher}
+                >
+                    Delete
+                </button>
             </div>
 
             <div className="td-grid">

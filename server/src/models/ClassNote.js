@@ -21,13 +21,11 @@ const ClassNoteSchema = new Schema(
         fromRole: { type: String, enum: ["teacher", "center"], required: true },
         toRole: { type: String, enum: ["teacher", "center"], required: true },
 
-        // để bạn filter theo center (rất hợp với logic bạn đang làm)
         centerId: { type: Schema.Types.ObjectId, ref: "User", index: true },
     },
     { timestamps: true }, // createdAt, updatedAt
 );
 
-// newest -> oldest cho 1 lớp
 ClassNoteSchema.index({ classId: 1, createdAt: -1 });
 
 module.exports = mongoose.model("ClassNote", ClassNoteSchema);

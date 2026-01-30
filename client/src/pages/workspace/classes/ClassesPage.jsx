@@ -5,7 +5,7 @@ import { apiUtils } from "../../../utils/newRequest";
 import "./ClassesPage.css";
 import { useAuth } from "../../../context/auth/AuthContext";
 
-function ClassCard({ c, onOpen, onDelete }) {
+function ClassCard({ c, onOpen, onDelete, canDelete }) {
     const isOnline = !!c?.isOnline;
     const duration = c?.durationMinutes ?? 90;
 
@@ -16,7 +16,10 @@ function ClassCard({ c, onOpen, onDelete }) {
             tabIndex={0}
             onClick={onOpen}
             onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") onOpen();
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onOpen();
+                }
             }}
         >
             {/* TOP */}
@@ -31,18 +34,19 @@ function ClassCard({ c, onOpen, onDelete }) {
                     {c?.name || c?.className || "Unnamed class"}
                 </div>
 
-                {/* DELETE BUTTON */}
-                <button
-                    className="class-card-delete"
-                    type="button"
-                    title="Delete class"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete?.(c);
-                    }}
-                >
-                    ✕
-                </button>
+                {canDelete && (
+                    <button
+                        className="class-card-delete"
+                        type="button"
+                        title="Delete class"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDelete?.(c);
+                        }}
+                    >
+                        ✕
+                    </button>
+                )}
             </div>
 
             <div className="class-card-sub">{c?.subject || "—"}</div>
@@ -80,6 +84,7 @@ export default function ClassesPage() {
     const [loading, setLoading] = useState(true);
     const [classes, setClasses] = useState([]);
     const { userInfo } = useAuth();
+    const isCenter = userInfo?.role === "center";
 
     const pageTitle =
         userInfo?.role === "center"
@@ -138,10 +143,13 @@ export default function ClassesPage() {
     );
 
     const handleDelete = async (cls) => {
+        if (!isCenter) {
+            alert("You are not allowed to delete classes.");
+            return;
+        }
+
         const ok = window.confirm(
-            `Delete class "${
-                cls?.name || "Unnamed"
-            }"?\nThis action cannot be undone.`,
+            `Delete class "${cls?.name || "Unnamed"}"?\nThis action cannot be undone.`,
         );
         if (!ok) return;
 
@@ -176,6 +184,7 @@ export default function ClassesPage() {
                             c={c}
                             onOpen={() => openClass(c)}
                             onDelete={handleDelete}
+                            canDelete={isCenter}
                         />
                     ))}
                 </div>
@@ -198,6 +207,7 @@ export default function ClassesPage() {
                             c={c}
                             onOpen={() => openClass(c)}
                             onDelete={handleDelete}
+                            canDelete={isCenter}
                         />
                     ))}
                 </div>

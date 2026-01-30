@@ -1,5 +1,6 @@
 // src/pages/workspace/classes/classDetail/NotesPanel/NotesPanel.jsx
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../../../utils/newRequest";
 import "./NotesPanel.css";
 import "../ClassDetailPage.css";
@@ -8,7 +9,6 @@ const getMyId = (userInfo) => userInfo?._id || userInfo?.userId;
 
 const pad2 = (n) => String(n).padStart(2, "0");
 
-// Force DD/MM/YYYY (optionally with HH:MM) regardless of system locale
 const formatDDMMYYYY_HHMM = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -29,6 +29,7 @@ export default function NotesPanel({
     userInfo,
     classNameValue = "",
 }) {
+    const navigate = useNavigate();
     const canUseNotes = role === "teacher" || role === "center";
     const myId = useMemo(() => getMyId(userInfo), [userInfo]);
 
@@ -107,12 +108,26 @@ export default function NotesPanel({
         }
     };
 
+    const latestNotes = useMemo(() => notes.slice(0, 5), [notes]);
+
     if (!canUseNotes) return null;
 
     return (
         <div className="cd-section">
             <div className="cd-section-head">
-                <h2>Notes </h2>
+                <h2>Notes</h2>
+
+                <button
+                    type="button"
+                    className="cd-btn cd-btn--ghost"
+                    onClick={() =>
+                        navigate(`/workspace/classes/${classId}/notes`)
+                    }
+                    disabled={!classId}
+                    title="View all notes"
+                >
+                    View all notes
+                </button>
             </div>
 
             <div className="cd-note-box">
@@ -137,17 +152,6 @@ export default function NotesPanel({
                     >
                         {noteLoading ? "Sending..." : "Send note"}
                     </button>
-
-                    {/* <button
-                        type="button"
-                        className="cd-btn"
-                        onClick={fetchNotes}
-                        disabled={noteLoading}
-                        style={{ marginLeft: 10 }}
-                        title="Refresh notes"
-                    >
-                        Refresh
-                    </button> */}
                 </div>
             </div>
 
@@ -165,7 +169,7 @@ export default function NotesPanel({
                 )}
 
                 {!loading &&
-                    notes.map((n) => (
+                    latestNotes.map((n) => (
                         <div className="cd-note-item" key={n._id}>
                             <div className="cd-note-meta">
                                 {!!classNameValue && !!n.classId && (
@@ -181,6 +185,12 @@ export default function NotesPanel({
                             <div className="cd-note-msg">{n.content || ""}</div>
                         </div>
                     ))}
+
+                {/* {!loading && notes.length > 5 && (
+                    <div className="cd-empty" style={{ marginTop: 6 }}>
+                        Showing latest 5 of {notes.length} notes
+                    </div>
+                )} */}
             </div>
         </div>
     );

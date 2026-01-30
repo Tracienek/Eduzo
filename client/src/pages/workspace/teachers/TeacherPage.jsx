@@ -24,7 +24,7 @@ const getTeacherId = (t) =>
     null;
 
 /** -------- card -------- */
-function TeacherCard({ t, onClick }) {
+function TeacherCard({ t, onClick, onDelete }) {
     const navigate = useNavigate();
     const id = getTeacherId(t);
 
@@ -54,6 +54,21 @@ function TeacherCard({ t, onClick }) {
             }}
             aria-label={`Open ${t?.fullName || t?.name || "teacher"}`}
         >
+            <button
+                className="teacher-card-delete"
+                type="button"
+                title="Delete teacher"
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(t);
+                }}
+                onKeyDown={(e) => {
+                    e.stopPropagation();
+                }}
+            >
+                ✕
+            </button>
+
             <div className="teacher-avatar" aria-hidden="true">
                 <img
                     className="teacher-img"
@@ -124,6 +139,29 @@ export default function TeacherPage({ onOpenTeacher }) {
         });
     };
 
+    const handleDeleteTeacher = async (teacher) => {
+        const id = getTeacherId(teacher);
+        const name = teacher?.fullName || teacher?.name || "Unnamed";
+
+        if (!id) {
+            alert("Missing teacher id");
+            return;
+        }
+
+        const ok = window.confirm(
+            `Delete teacher "${name}"?\nThis action cannot be undone.`,
+        );
+        if (!ok) return;
+
+        try {
+            await apiUtils.delete(`/center/teachers/${id}`);
+
+            setTeachers((prev) => prev.filter((x) => getTeacherId(x) !== id));
+        } catch (err) {
+            alert(err?.response?.data?.message || "Failed to delete teacher");
+        }
+    };
+
     const content = useMemo(() => {
         if (loading) return <p className="tp-muted">Loading...</p>;
         if (pageError) return <p className="tp-error">{pageError}</p>;
@@ -166,6 +204,7 @@ export default function TeacherPage({ onOpenTeacher }) {
                             }
                             t={t}
                             onClick={(teacher) => onOpenTeacher?.(teacher)}
+                            onDelete={handleDeleteTeacher}
                         />
                     );
                 })}

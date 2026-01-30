@@ -75,3 +75,57 @@ exports.markAllRead = async (req, res) => {
         return res.status(500).json({ message: "Mark all read failed" });
     }
 };
+
+exports.deleteNotification = async (req, res) => {
+    try {
+        const myIdRaw = getMyId(req);
+        const myId = toObjectId(myIdRaw);
+        const notiId = toObjectId(req.params.id);
+
+        if (!myId) return res.status(401).json({ message: "Invalid user" });
+        if (!notiId) return res.status(400).json({ message: "Invalid id" });
+
+        const result = await Notification.updateOne(
+            { _id: notiId, recipients: myId },
+            {
+                $pull: { recipients: myId, readBy: myId },
+            },
+        );
+
+        if (!result.matchedCount) {
+            return res.status(404).json({ message: "Notification not found" });
+        }
+
+        await Notification.deleteOne({ _id: notiId, recipients: { $size: 0 } });
+
+        return res.json({ metadata: { ok: true } });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Delete notification failed" });
+    }
+};
+
+exports.deleteAllNotifications = async (req, res) => {
+    try {
+        const myIdRaw = getMyId(req);
+        const myId = toObjectId(myIdRaw);
+
+        if (!myId) return res.status(401).json({ message: "Invalid user" });
+
+        // Pull user khỏi recipients của tất cả noti của user đó
+        await Notification.updateMany(
+            { recipients: myId },
+            { $pull: { recipients: myId, readBy: myId } },
+        );
+
+        // Dọn rác những noti không còn recipients (optional)
+        await Notification.deleteMany({ recipients: { $size: 0 } });
+
+        return res.json({ metadata: { ok: true } });
+    } catch (err) {
+        console.error(err);
+        return res
+            .status(500)
+            .json({ message: "Delete all notifications failed" });
+    }
+};

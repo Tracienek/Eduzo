@@ -108,7 +108,9 @@ export default function ClassDetailPage() {
     const { classId } = useParams();
     const navigate = useNavigate();
     const { userInfo } = useAuth();
-    const role = userInfo?.role; // "teacher" | "center"
+
+    const role = userInfo?.role;
+
     const canUseNotes = role === "teacher" || role === "center";
 
     const [openStudent, setOpenStudent] = useState(false);

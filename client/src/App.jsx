@@ -26,6 +26,7 @@ import ProfilePage from "./pages/workspace/profile/ProfilePage.jsx";
 import TeacherDetail from "./pages/workspace/teachers/teacherDetail/TeacherDetail.jsx";
 import NotificationsPage from "./pages/workspace/notification/Notification.jsx";
 import FeedbackPage from "./pages/workspace/classes/classDetail/FeedbackPanel/FeedbackPage.jsx";
+import NoteDetails from "./pages/workspace/classes/classDetail/NotesPanel/noteDetails/NoteDetails.jsx";
 
 const router = createBrowserRouter([
     {
@@ -58,6 +59,7 @@ const router = createBrowserRouter([
                 path: "classes/:classId/attendance",
                 element: <FullAttendancePage />,
             },
+            { path: "classes/:classId/notes", element: <NoteDetails /> },
 
             {
                 path: "teachers",

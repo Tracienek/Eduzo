@@ -9,12 +9,10 @@ const NotificationSchema = new mongoose.Schema(
         classId: { type: mongoose.Schema.Types.ObjectId, ref: "Class" },
         className: { type: String, default: "" },
 
-        // ai nhận
         recipients: [
             { type: mongoose.Schema.Types.ObjectId, ref: "User", index: true },
         ],
 
-        // ai đã đọc
         readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     },
     { timestamps: true },

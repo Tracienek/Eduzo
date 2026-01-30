@@ -85,3 +85,43 @@ exports.getTeachers = async (req, res) => {
         return res.status(500).json({ message: "Get teachers failed" });
     }
 };
+
+exports.deleteTeacher = async (req, res) => {
+    try {
+        const centerId = req.user.userId;
+        const { id } = req.params;
+
+        // check center
+        const center = await User.findById(centerId).lean();
+        if (!center || center.role !== "center") {
+            return res
+                .status(403)
+                .json({ message: "Only center can delete teacher" });
+        }
+
+        // find teacher
+        const teacher = await User.findById(id).lean();
+        if (!teacher) {
+            return res.status(404).json({ message: "Teacher not found" });
+        }
+
+        // ensure it's a teacher
+        if (teacher.role !== "teacher") {
+            return res.status(400).json({ message: "User is not a teacher" });
+        }
+
+        // ensure teacher belongs to this center
+        if (String(teacher.centerId) !== String(centerId)) {
+            return res
+                .status(403)
+                .json({ message: "You can only delete your teachers" });
+        }
+
+        await User.findByIdAndDelete(id);
+
+        return res.json({ message: "Teacher deleted successfully" });
+    } catch (err) {
+        console.error("deleteTeacher error:", err);
+        return res.status(500).json({ message: "Delete teacher failed" });
+    }
+};

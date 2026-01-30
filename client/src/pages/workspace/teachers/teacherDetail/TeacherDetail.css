@@ -242,6 +242,42 @@
     margin-bottom: 8px;
 }
 
+.td-delete {
+    margin-left: auto; /* đẩy nút về góc phải */
+
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+
+    border: 1px solid #efeaff;
+    background: #ffd3d3;
+
+    cursor: pointer;
+    font-weight: 900;
+    font-size: 13px;
+    color: #ff4545;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.12s ease;
+}
+
+.td-delete:hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.td-delete:active {
+    transform: translateY(0);
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 1100px) {
     .td-grid {
@@ -283,6 +319,12 @@
         padding: 0 10px;
         font-size: 12px;
     }
+
+    .td-delete {
+        height: 38px;
+        padding: 0 12px;
+        font-size: 12px;
+    }
 }
 
 /* reduce motion */
@@ -294,5 +336,12 @@
     .td-back:hover {
         transform: none;
         box-shadow: none;
+    }
+
+    .td-delete {
+        transition: none;
+    }
+    .td-delete:hover {
+        transform: none;
     }
 }

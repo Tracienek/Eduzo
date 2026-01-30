@@ -103,7 +103,6 @@ export default function WorkspaceTopBar() {
         return () => document.removeEventListener("mousedown", close);
     }, []);
 
-    // ✅ close dropdown/search when route changes
     useEffect(() => {
         setOpenSearch(false);
         setUserOpen(false);
@@ -112,11 +111,15 @@ export default function WorkspaceTopBar() {
     const openStudent = (s) => {
         setQ("");
         setOpenSearch(false);
-        if (s?.folderId && s?.classId) {
-            navigate(`/workspace/classes/folder/${s.folderId}/${s.classId}`);
+
+        const classId = s?.classId;
+        if (!classId) return;
+
+        if (s?.folderId) {
+            navigate(`/workspace/classes/folder/${s.folderId}/${classId}`);
             return;
         }
-        navigate(`/workspace/students/${s._id}`);
+        navigate(`/workspace/classes/${classId}`);
     };
 
     const openClass = (c) => {

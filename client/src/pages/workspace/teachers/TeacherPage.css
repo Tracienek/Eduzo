@@ -109,32 +109,25 @@
 
 /* ===== Teacher Card ===== */
 .teacher-card {
-    width: 100%;
+    position: relative;
+    background: #fff;
+    border: 1px solid #ece7ff;
+    border-radius: 16px;
+    padding: 14px;
+    cursor: pointer;
+
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 8px;
-
-    cursor: pointer;
-    user-select: none;
-
-    border-radius: 14px;
-    padding: 10px 8px;
+    gap: 10px;
 
     transition:
-        transform 0.15s ease,
-        background 0.15s ease,
-        box-shadow 0.15s ease;
+        box-shadow 0.18s ease,
+        transform 0.12s ease;
 }
 
 .teacher-card:hover {
     transform: translateY(-2px);
-    background: linear-gradient(
-        90deg,
-        rgba(224, 203, 255, 0.65),
-        rgba(210, 186, 255, 0.35)
-    );
-    box-shadow: 0 10px 18px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08);
 }
 
 .teacher-card:active {
@@ -172,9 +165,43 @@
     word-break: break-word;
 }
 
+/* ===== Delete button (match delete class UX) ===== */
+.teacher-card {
+    position: relative;
+}
+
+.teacher-card-delete {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid #efeaff;
+    background: #fbd9d9;
+    cursor: pointer;
+    font-weight: 900;
+    color: #ff4545;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    transition:
+        background 0.15s ease,
+        color 0.15s ease,
+        transform 0.12s ease;
+}
+
+.teacher-card-delete:hover {
+    background: var(--danger);
+    color: #fff;
+    transform: translateY(-1px);
+}
+
 /* ===== Responsive ===== */
 
-/* 1400 -> 5 cột */
 @media (max-width: 1400px) {
     .teachers-grid {
         grid-template-columns: repeat(5, minmax(120px, 1fr));
@@ -182,7 +209,6 @@
     }
 }
 
-/* laptop nhỏ -> 4 cột */
 @media (max-width: 1200px) {
     .teachers-grid {
         grid-template-columns: repeat(4, minmax(140px, 1fr));
@@ -190,7 +216,6 @@
     }
 }
 
-/* tablet -> 3 cột */
 @media (max-width: 900px) {
     .teachers-panel {
         padding: 16px;
@@ -216,7 +241,6 @@
     }
 }
 
-/* mobile lớn */
 @media (max-width: 600px) {
     .teachers-panel {
         padding: 14px;
@@ -265,7 +289,6 @@
     }
 }
 
-/* mobile nhỏ -> list row */
 @media (max-width: 420px) {
     .teachers-grid {
         grid-template-columns: 1fr;
@@ -304,5 +327,11 @@
     .teacher-card:hover {
         transform: none;
         box-shadow: none;
+    }
+    .teacher-card-delete {
+        transition: none;
+    }
+    .teacher-card-delete:hover {
+        transform: none;
     }
 }
