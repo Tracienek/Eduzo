@@ -4,8 +4,8 @@ import { useNavigate } from "react-router-dom";
 import teacherImg from "../../../assets/images/teacher.svg";
 import { apiUtils } from "../../../utils/newRequest";
 import "./TeacherPage.css";
-
 import CreateTeacherModal from "./createModal/CreateTeacherModal";
+import { useAuth } from "../../../context/auth/AuthContext";
 
 /** -------- helpers -------- */
 const unwrap = (res) => {
@@ -13,7 +13,6 @@ const unwrap = (res) => {
     return root?.metadata ?? root?.data ?? root;
 };
 
-// ✅ robust id getter (fix click not navigate)
 const getTeacherId = (t) =>
     t?._id ||
     t?.id ||
@@ -31,7 +30,6 @@ function TeacherCard({ t, onClick }) {
 
     const go = () => {
         onClick?.(t);
-
         if (!id) {
             console.warn(
                 "Missing teacher id for navigation. Teacher object:",
@@ -39,7 +37,6 @@ function TeacherCard({ t, onClick }) {
             );
             return;
         }
-
         navigate(`/workspace/teachers/${id}`);
     };
 
@@ -57,9 +54,15 @@ function TeacherCard({ t, onClick }) {
             }}
             aria-label={`Open ${t?.fullName || t?.name || "teacher"}`}
         >
-            <div className="teacher-avatar">
-                <img src={teacherImg} alt="" draggable={false} />
+            <div className="teacher-avatar" aria-hidden="true">
+                <img
+                    className="teacher-img"
+                    src={teacherImg}
+                    alt=""
+                    draggable={false}
+                />
             </div>
+
             <div className="teacher-name">{t?.fullName || t?.name || "—"}</div>
         </div>
     );
@@ -71,6 +74,13 @@ export default function TeacherPage({ onOpenTeacher }) {
     const [loading, setLoading] = useState(true);
     const [pageError, setPageError] = useState("");
     const [openCreate, setOpenCreate] = useState(false);
+
+    const { userInfo } = useAuth();
+
+    const pageTitle =
+        userInfo?.role === "center"
+            ? `${userInfo?.fullName || "Center"}’s Teachers`
+            : "My Teachers";
 
     useEffect(() => {
         let mounted = true;
@@ -106,7 +116,6 @@ export default function TeacherPage({ onOpenTeacher }) {
     const onCreated = (teacher) => {
         if (!teacher) return;
 
-        // ✅ avoid duplicates if same teacher already exists
         const newId = getTeacherId(teacher);
         setTeachers((prev) => {
             if (!newId) return [teacher, ...prev];
@@ -116,18 +125,32 @@ export default function TeacherPage({ onOpenTeacher }) {
     };
 
     const content = useMemo(() => {
-        if (loading) return <p>Loading...</p>;
+        if (loading) return <p className="tp-muted">Loading...</p>;
         if (pageError) return <p className="tp-error">{pageError}</p>;
         if (!teachers.length)
-            return <p>No teachers yet. Click “＋ Teachers”</p>;
+            return (
+                <p className="tp-muted">
+                    No teachers yet. Click “＋ Teachers”.
+                </p>
+            );
         return null;
     }, [loading, pageError, teachers.length]);
 
     return (
         <section className="teachers-panel">
             <div className="teachers-header">
-                <h2>Your Teachers</h2>
-                <button onClick={() => setOpenCreate(true)}>＋ Teachers</button>
+                <h2 title={pageTitle}>{pageTitle}</h2>
+
+                <button
+                    type="button"
+                    className="teachers-add"
+                    onClick={() => setOpenCreate(true)}
+                >
+                    <span className="plus" aria-hidden="true">
+                        ＋
+                    </span>
+                    Teachers
+                </button>
             </div>
 
             {content}

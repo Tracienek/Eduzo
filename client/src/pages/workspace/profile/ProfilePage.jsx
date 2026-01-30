@@ -3,9 +3,43 @@ import { useEffect, useMemo, useState } from "react";
 import "./ProfilePage.css";
 import { apiUtils } from "../../../utils/newRequest";
 import { useAuth } from "../../../context/auth/AuthContext";
-
-// ✅ local fallback
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import teacherFallback from "../../../assets/images/teacher.svg";
+
+const isoToDMY = (value) => {
+    if (!value) return "";
+    const s = String(value).trim();
+
+    // already DMY
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+
+    // ISO yyyy-mm-dd
+    const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (m) {
+        const [, yyyy, mm, dd] = m;
+        return `${dd}/${mm}/${yyyy}`;
+    }
+
+    // fallback parse date string
+    const d = new Date(s);
+    if (Number.isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+};
+
+const dmyToISO = (value) => {
+    if (!value) return "";
+    const s = String(value).trim();
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+
+    const m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return "";
+    const [, dd, mm, yyyy] = m;
+    return `${yyyy}-${mm}-${dd}`;
+};
 
 export default function ProfilePage() {
     const { userInfo, loadUserMe } = useAuth();
@@ -18,7 +52,6 @@ export default function ProfilePage() {
 
     const FALLBACK_AVATAR = teacherFallback;
 
-    // ✅ backend origin for /uploads
     const SERVER_ORIGIN = useMemo(() => {
         const isProd = import.meta.env.VITE_ENV === "production";
         return isProd
@@ -26,7 +59,6 @@ export default function ProfilePage() {
             : import.meta.env.VITE_SERVER_LOCAL_ORIGIN;
     }, []);
 
-    // ✅ turn "/uploads/xxx" into "http://localhost:5000/uploads/xxx"
     const resolveAvatar = (url) => {
         if (!url) return "";
         const s = String(url);
@@ -35,10 +67,9 @@ export default function ProfilePage() {
         return s;
     };
 
-    // ✅ used to bust browser cache after upload
     const [avatarBust, setAvatarBust] = useState(0);
 
-    // ===== BASIC PROFILE: original + draft =====
+    // ===== BASIC PROFILE =====
     const [profileOriginal, setProfileOriginal] = useState({
         fullName: "",
         email: "",
@@ -64,6 +95,15 @@ export default function ProfilePage() {
         confirmNewPassword: "",
     });
 
+    const [pwVisible, setPwVisible] = useState({
+        current: false,
+        new: false,
+        confirm: false,
+    });
+
+    const resetPwVisible = () =>
+        setPwVisible({ current: false, new: false, confirm: false });
+
     // ===== EDIT MODES =====
     const [editingProfile, setEditingProfile] = useState(false);
     const [editingPw, setEditingPw] = useState(false);
@@ -85,15 +125,13 @@ export default function ProfilePage() {
             gender: userInfo.gender || "",
             languageOrSpeciality: userInfo.languageOrSpeciality || "",
             avatar: userInfo.avatar || "",
-            dob: userInfo.dob || "",
+            dob: isoToDMY(userInfo.dob || ""),
         };
 
         setProfileOriginal(p);
-        setProfileDraft(p);
 
-        setEditingProfile(false);
-        setEditingPw(false);
-    }, [userInfo]);
+        setProfileDraft((prev) => (editingProfile ? prev : p));
+    }, [userInfo, editingProfile]);
 
     // ===== ACTIONS =====
     const onSaveProfile = async () => {
@@ -101,6 +139,8 @@ export default function ProfilePage() {
 
         if (!profileDraft.fullName.trim())
             return toast("error", "Name is required");
+
+        const dobISO = dmyToISO(profileDraft.dob);
 
         try {
             setSavingProfile(true);
@@ -111,7 +151,7 @@ export default function ProfilePage() {
                 languageOrSpeciality: (
                     profileDraft.languageOrSpeciality || ""
                 ).trim(),
-                dob: profileDraft.dob || null,
+                dob: dobISO || null,
             });
 
             await loadUserMe();
@@ -229,6 +269,7 @@ export default function ProfilePage() {
             await loadUserMe();
             toast("success", "Password changed successfully");
             setEditingPw(false);
+            resetPwVisible();
         } catch (e) {
             const status = e?.response?.status;
             const serverMsg = e?.response?.data?.message;
@@ -249,12 +290,14 @@ export default function ProfilePage() {
             confirmNewPassword: "",
         });
         setEditingPw(false);
+        resetPwVisible();
     };
 
-    // ✅ resolved avatar src + cache bust
     const avatarSrc =
         resolveAvatar(profileDraft.avatar) &&
-        `${resolveAvatar(profileDraft.avatar)}${profileDraft.avatar.includes("?") ? "&" : "?"}v=${avatarBust}`;
+        `${resolveAvatar(profileDraft.avatar)}${
+            profileDraft.avatar.includes("?") ? "&" : "?"
+        }v=${avatarBust}`;
 
     return (
         <div className="profile-page">
@@ -388,12 +431,13 @@ export default function ProfilePage() {
                             </select>
                         </div>
 
+                        {/* DOB: DD/MM/YYYY */}
                         <div className="profile-field">
                             <label className="profile-label">
                                 Date of Birth
                             </label>
                             <input
-                                type="date"
+                                type="text"
                                 className="profile-input"
                                 value={profileDraft.dob}
                                 disabled={!editingProfile}
@@ -403,6 +447,8 @@ export default function ProfilePage() {
                                         dob: e.target.value,
                                     }))
                                 }
+                                placeholder="DD/MM/YYYY"
+                                inputMode="numeric"
                             />
                         </div>
 
@@ -468,61 +514,134 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="profile-grid three">
+                        {/* Current */}
                         <div className="profile-field">
                             <label className="profile-label">
                                 Current password
                             </label>
-                            <input
-                                className="profile-input"
-                                type="password"
-                                disabled={!editingPw}
-                                value={pwDraft.currentPassword}
-                                onChange={(e) =>
-                                    setPwDraft((p) => ({
-                                        ...p,
-                                        currentPassword: e.target.value,
-                                    }))
-                                }
-                                placeholder="Current password"
-                            />
+
+                            <div className="profile-input-wrap">
+                                <input
+                                    className="profile-input profile-input-hasIcon"
+                                    type={
+                                        pwVisible.current ? "text" : "password"
+                                    }
+                                    disabled={!editingPw}
+                                    value={pwDraft.currentPassword}
+                                    onChange={(e) =>
+                                        setPwDraft((p) => ({
+                                            ...p,
+                                            currentPassword: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="Current password"
+                                    autoComplete="current-password"
+                                />
+
+                                <button
+                                    type="button"
+                                    className="profile-eye-btn"
+                                    disabled={!editingPw}
+                                    onClick={() =>
+                                        setPwVisible((v) => ({
+                                            ...v,
+                                            current: !v.current,
+                                        }))
+                                    }
+                                >
+                                    {pwVisible.current ? (
+                                        <i className="fa-solid fa-eye-slash" />
+                                    ) : (
+                                        <i className="fa-solid fa-eye" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
+                        {/* New */}
                         <div className="profile-field">
                             <label className="profile-label">
                                 New password
                             </label>
-                            <input
-                                className="profile-input"
-                                type="password"
-                                disabled={!editingPw}
-                                value={pwDraft.newPassword}
-                                onChange={(e) =>
-                                    setPwDraft((p) => ({
-                                        ...p,
-                                        newPassword: e.target.value,
-                                    }))
-                                }
-                                placeholder="New password"
-                            />
+
+                            <div className="profile-input-wrap">
+                                <input
+                                    className="profile-input profile-input-hasIcon"
+                                    type={pwVisible.new ? "text" : "password"}
+                                    disabled={!editingPw}
+                                    value={pwDraft.newPassword}
+                                    onChange={(e) =>
+                                        setPwDraft((p) => ({
+                                            ...p,
+                                            newPassword: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="New password"
+                                    autoComplete="new-password"
+                                />
+
+                                <button
+                                    type="button"
+                                    className="profile-eye-btn"
+                                    disabled={!editingPw}
+                                    onClick={() =>
+                                        setPwVisible((v) => ({
+                                            ...v,
+                                            new: !v.new,
+                                        }))
+                                    }
+                                >
+                                    {pwVisible.new ? (
+                                        <i className="fa-solid fa-eye-slash" />
+                                    ) : (
+                                        <i className="fa-solid fa-eye" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
+                        {/* Confirm */}
                         <div className="profile-field">
                             <label className="profile-label">
                                 Confirm new password
                             </label>
-                            <input
-                                className="profile-input"
-                                type="password"
-                                disabled={!editingPw}
-                                value={pwDraft.confirmNewPassword}
-                                onChange={(e) =>
-                                    setPwDraft((p) => ({
-                                        ...p,
-                                        confirmNewPassword: e.target.value,
-                                    }))
-                                }
-                                placeholder="Confirm new password"
-                            />
+
+                            <div className="profile-input-wrap">
+                                <input
+                                    className="profile-input profile-input-hasIcon"
+                                    type={
+                                        pwVisible.confirm ? "text" : "password"
+                                    }
+                                    disabled={!editingPw}
+                                    value={pwDraft.confirmNewPassword}
+                                    onChange={(e) =>
+                                        setPwDraft((p) => ({
+                                            ...p,
+                                            confirmNewPassword: e.target.value,
+                                        }))
+                                    }
+                                    placeholder="Confirm new password"
+                                    autoComplete="new-password"
+                                />
+
+                                <button
+                                    type="button"
+                                    className="profile-eye-btn"
+                                    disabled={!editingPw}
+                                    onClick={() =>
+                                        setPwVisible((v) => ({
+                                            ...v,
+                                            confirm: !v.confirm,
+                                        }))
+                                    }
+                                >
+                                    {pwVisible.confirm ? (
+                                        <i className="fa-solid fa-eye-slash" />
+                                    ) : (
+                                        <i className="fa-solid fa-eye" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
 

@@ -1,7 +1,7 @@
 // src/pages/workspace/classes/fullAttendance/FullAttendancePage.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { apiUtils } from "../../../../utils/newRequest";
+import { apiUtils } from "../../../../../utils/newRequest";
 import "./FullAttendancePage.css";
 
 /** ===== helpers ===== */
@@ -9,7 +9,6 @@ const pad2 = (n) => String(n).padStart(2, "0");
 const toISODate = (d) =>
     `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 
-// ✅ same style as ClassDetailPage
 const isoToDMY = (iso) => {
     if (!iso) return "";
     const [y, m, d] = iso.split("-");
@@ -18,7 +17,6 @@ const isoToDMY = (iso) => {
 };
 
 const dmyToISO = (dmy) => {
-    // allow 1-2 digits like 2/1/2026 or 02/01/2026
     const m = dmy.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
     if (!m) return null;
     let [, dd, mm, yyyy] = m;
@@ -109,14 +107,11 @@ export default function FullAttendancePage() {
     const [cls, setCls] = useState(null);
     const [error, setError] = useState("");
 
-    // keep ISO in state (like startDate in ClassDetailPage)
     const [monthISO, setMonthISO] = useState(() => toISODate(new Date()));
-    // text shown to user (dd/mm/yyyy)
     const [displayMonth, setDisplayMonth] = useState(() => isoToDMY(monthISO));
 
     const [records, setRecords] = useState({});
 
-    /** ===== load class ===== */
     useEffect(() => {
         let alive = true;
 
@@ -145,19 +140,18 @@ export default function FullAttendancePage() {
         };
     }, [classId]);
 
-    // sync display when ISO changes
     useEffect(() => {
         setDisplayMonth(isoToDMY(monthISO));
     }, [monthISO]);
 
     const weekdays = useMemo(
         () => parseWeekdays(cls?.scheduleText || "Mon, Wed, Fri - 9:00 AM"),
-        [cls?.scheduleText]
+        [cls?.scheduleText],
     );
 
     const monthRange = useMemo(
         () => getMonthRangeFromISO(monthISO),
-        [monthISO]
+        [monthISO],
     );
 
     const sessionDates = useMemo(() => {
@@ -170,12 +164,12 @@ export default function FullAttendancePage() {
 
     const [datesA, datesB] = useMemo(
         () => splitByMidMonth(sessionDates),
-        [sessionDates]
+        [sessionDates],
     );
 
     const maxCols = useMemo(
         () => Math.max(datesA.length, datesB.length, 1),
-        [datesA.length, datesB.length]
+        [datesA.length, datesB.length],
     );
 
     const allDateKeys = useMemo(() => {
@@ -184,7 +178,6 @@ export default function FullAttendancePage() {
         return [...a, ...b];
     }, [datesA, datesB]);
 
-    /** ===== fetch records ===== */
     useEffect(() => {
         if (!classId) return;
         let alive = true;
@@ -197,9 +190,7 @@ export default function FullAttendancePage() {
                 }
 
                 const res = await apiUtils.get(
-                    `/classes/${classId}/attendance?dates=${allDateKeys.join(
-                        ","
-                    )}`
+                    `/classes/${classId}/attendance?dates=${allDateKeys.join(",")}`,
                 );
                 const list = res?.data?.metadata?.records || [];
 
@@ -235,7 +226,6 @@ export default function FullAttendancePage() {
 
     const students = Array.isArray(cls.students) ? cls.students : [];
 
-    // Date|HW header cells, padded to maxCols
     const renderHeaderCells = (datesArr, as = "th") => {
         const Cell = as;
         const cells = [];
@@ -253,19 +243,19 @@ export default function FullAttendancePage() {
                                 {DAY_SHORT[d.getDay()]}
                             </div>
                         </div>
-                    </Cell>
+                    </Cell>,
                 );
                 cells.push(
                     <Cell key={`h-${i}`} className="fa-th-hw">
                         HW
-                    </Cell>
+                    </Cell>,
                 );
             } else {
                 cells.push(
-                    <Cell key={`d-${i}`} className="fa-th-date fa-th-empty" />
+                    <Cell key={`d-${i}`} className="fa-th-date fa-th-empty" />,
                 );
                 cells.push(
-                    <Cell key={`h-${i}`} className="fa-th-hw fa-th-empty" />
+                    <Cell key={`h-${i}`} className="fa-th-hw fa-th-empty" />,
                 );
             }
         }
@@ -273,7 +263,6 @@ export default function FullAttendancePage() {
         return cells;
     };
 
-    // Body cells (Attendance checkbox | HW checkbox), padded to maxCols
     const renderBodyCells = (sid, datesArr) => {
         const cells = [];
 
@@ -292,7 +281,7 @@ export default function FullAttendancePage() {
                     ) : (
                         <span className="fa-dash">—</span>
                     )}
-                </td>
+                </td>,
             );
 
             cells.push(
@@ -306,7 +295,7 @@ export default function FullAttendancePage() {
                     ) : (
                         <span className="fa-dash">—</span>
                     )}
-                </td>
+                </td>,
             );
         }
 
@@ -321,10 +310,10 @@ export default function FullAttendancePage() {
                     type="button"
                     onClick={() => navigate(-1)}
                 >
-                    ← Back
+                    Back
                 </button>
 
-                <div className="fa-title">
+                <div className="fa-title" title={cls?.name || "Class"}>
                     Full Attendance —{" "}
                     <span className="fa-title-sub">{cls?.name || "Class"}</span>
                 </div>
@@ -342,7 +331,7 @@ export default function FullAttendancePage() {
                                 value={displayMonth}
                                 onChange={(e) => {
                                     const v = normalizeDMYTyping(
-                                        e.target.value
+                                        e.target.value,
                                     );
                                     setDisplayMonth(v);
 
@@ -402,7 +391,6 @@ export default function FullAttendancePage() {
                 (based on schedule). Read-only.
             </div>
 
-            {/* CARD LIST */}
             <div className="fa-cards">
                 {students.map((s, idx) => {
                     const sid = normalizeStudentId(s, idx);

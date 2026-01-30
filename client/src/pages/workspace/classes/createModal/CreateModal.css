@@ -35,7 +35,9 @@
     font-size: 18px;
     line-height: 1;
     color: #2b2b2b;
-    transition: transform 0.15s ease, background 0.15s ease;
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease;
 }
 
 .cm-close:hover {
@@ -84,7 +86,10 @@
     font-size: 12px;
     font-weight: 800;
     cursor: pointer;
-    transition: transform 0.12s ease, background 0.12s ease, border 0.12s ease;
+    transition:
+        transform 0.12s ease,
+        background 0.12s ease,
+        border 0.12s ease;
 }
 
 .cm-day-chip:hover {
@@ -94,6 +99,7 @@
         var(--tertiary-color),
         var(--secondary-color)
     );
+    color: #ffffff;
 }
 
 .cm-day-chip.active {
@@ -102,6 +108,7 @@
         var(--tertiary-color),
         var(--secondary-color)
     );
+    color: #ffffff;
 }
 
 .cm-helper {
@@ -184,7 +191,10 @@
     color: #fff;
     background: linear-gradient(90deg, #9854dc, #e2ccf8);
     box-shadow: 0 10px 20px;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
 }
 
 .cm-primary:hover:enabled {
@@ -194,6 +204,7 @@
         var(--tertiary-color),
         var(--secondary-color)
     );
+    color: #ffffff;
 }
 
 .cm-primary:disabled {

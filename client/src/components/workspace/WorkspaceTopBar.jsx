@@ -6,6 +6,22 @@ import { useAuth } from "../../context/auth/AuthContext";
 import { apiUtils } from "../../utils/newRequest";
 import CreateClass from "../../pages/workspace/classes/createModal/CreateClass";
 
+/* ===== helpers ===== */
+const getServerOrigin = () => {
+    const isProd = import.meta.env.VITE_ENV === "production";
+    return isProd
+        ? import.meta.env.VITE_SERVER_ORIGIN
+        : import.meta.env.VITE_SERVER_LOCAL_ORIGIN;
+};
+
+const resolveAvatar = (url) => {
+    if (!url) return "";
+    const s = String(url);
+    if (/^https?:\/\//i.test(s)) return s;
+    if (s.startsWith("/uploads/")) return `${getServerOrigin()}${s}`;
+    return s;
+};
+
 export default function WorkspaceTopBar() {
     const { userInfo, logout } = useAuth();
     const role = userInfo?.role;
@@ -52,7 +68,7 @@ export default function WorkspaceTopBar() {
         const t = setTimeout(async () => {
             try {
                 const res = await apiUtils.get(
-                    `/search?q=${encodeURIComponent(keyword)}`
+                    `/search?q=${encodeURIComponent(keyword)}`,
                 );
                 const data = res?.data?.metadata || res?.data || {};
 
@@ -72,11 +88,12 @@ export default function WorkspaceTopBar() {
             } finally {
                 if (reqId === lastReq.current) setLoading(false);
             }
-        }, 300);
+        }, 280);
 
         return () => clearTimeout(t);
     }, [q]);
 
+    // close search on outside click
     useEffect(() => {
         const close = (e) => {
             if (!searchWrapRef.current) return;
@@ -85,6 +102,12 @@ export default function WorkspaceTopBar() {
         document.addEventListener("mousedown", close);
         return () => document.removeEventListener("mousedown", close);
     }, []);
+
+    // ✅ close dropdown/search when route changes
+    useEffect(() => {
+        setOpenSearch(false);
+        setUserOpen(false);
+    }, [location.pathname]);
 
     const openStudent = (s) => {
         setQ("");
@@ -123,14 +146,13 @@ export default function WorkspaceTopBar() {
         return () => document.removeEventListener("mousedown", close);
     }, []);
 
-    /* ============ AVATAR FIX (NO FLICKER) ============ */
+    /* ============ AVATAR ============ */
     const FALLBACK_AVATAR = "https://via.placeholder.com/40";
     const [avatarSrc, setAvatarSrc] = useState(FALLBACK_AVATAR);
 
     useEffect(() => {
-        // NOTE: bạn đang dùng userInfo?.avatar (field name)
-        // Nếu sau này bạn đổi backend thành avatarUrl thì đổi ở đây theo.
-        setAvatarSrc(userInfo?.avatar || FALLBACK_AVATAR);
+        const resolved = resolveAvatar(userInfo?.avatar);
+        setAvatarSrc(resolved || FALLBACK_AVATAR);
     }, [userInfo?.avatar]);
 
     return (
@@ -167,6 +189,7 @@ export default function WorkspaceTopBar() {
                                 <div className="workspace-search-title">
                                     Students
                                 </div>
+
                                 {results.students.slice(0, 8).map((s) => (
                                     <button
                                         key={s._id}
@@ -184,6 +207,7 @@ export default function WorkspaceTopBar() {
                                                     : "Class: —"}
                                             </div>
                                         </div>
+
                                         <div className="workspace-search-item-hint">
                                             Open
                                         </div>
@@ -197,6 +221,7 @@ export default function WorkspaceTopBar() {
                                 <div className="workspace-search-title">
                                     Classes
                                 </div>
+
                                 {results.classes.slice(0, 8).map((c) => (
                                     <button
                                         key={c._id}
@@ -213,9 +238,10 @@ export default function WorkspaceTopBar() {
                                             <div className="workspace-search-item-sub">
                                                 {c.folderName
                                                     ? `Folder: ${c.folderName}`
-                                                    : ""}
+                                                    : "Folder: —"}
                                             </div>
                                         </div>
+
                                         <div className="workspace-search-item-hint">
                                             Open
                                         </div>
@@ -227,7 +253,7 @@ export default function WorkspaceTopBar() {
                 )}
             </div>
 
-            {/* MIDDLE: CREATE CLASS */}
+            {/* MIDDLE: + Classes */}
             <div className="workspace-topbar-mid">
                 <button
                     className="workspace-topbar-primary"
@@ -268,6 +294,7 @@ export default function WorkspaceTopBar() {
                             onError={() => setAvatarSrc(FALLBACK_AVATAR)}
                             alt={userInfo?.fullName || "User"}
                         />
+
                         <span className="workspace-user-name">
                             {userInfo?.fullName || "User"}
                         </span>
@@ -300,7 +327,6 @@ export default function WorkspaceTopBar() {
 
                             <div className="workspace-user-divider" />
 
-                            {/* ✅ Account -> Profile page */}
                             <Link
                                 to="/workspace/profile"
                                 className="workspace-user-item"

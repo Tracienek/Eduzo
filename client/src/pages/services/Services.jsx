@@ -18,11 +18,11 @@ const TEACHER_FEATURES = [
     },
     {
         icon: "fa-solid fa-chart-simple",
-        title: "Track average ratings and satisfaction",
+        title: "Checking attendence and participation",
     },
     {
         icon: "fa-solid fa-arrow-trend-up",
-        title: "Identify trends and improvement areas",
+        title: "Tracking teacher performance",
     },
     {
         icon: "fa-solid fa-clock-rotate-left",

@@ -28,6 +28,9 @@ const classRoutes = require("./routes/class.routes");
 const studentRoutes = require("./routes/student.routes");
 const searchRoutes = require("./routes/search.routes");
 const centerRoutes = require("./routes/center.routes");
+const attendanceRoutes = require("./routes/attendance.routes");
+const attendanceLogRoutes = require("./routes/attendanceLog.routes");
+const teacherAttendanceLogRoutes = require("./routes/teacherAttendanceLog.routes");
 
 app.use("/v1/api/auth", authRoutes);
 app.use("/v1/api/user", userRoutes);
@@ -38,5 +41,8 @@ app.use("/v1/api/center", centerRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/v1/api/notifications", require("./routes/notification.routes"));
 app.use("/v1/api/feedback", require("./routes/feedback.routes"));
+app.use("/v1/api/classes", attendanceRoutes);
+app.use("/v1/api/classes", attendanceLogRoutes);
+app.use("/v1/api/teachers", teacherAttendanceLogRoutes);
 
 module.exports = app;

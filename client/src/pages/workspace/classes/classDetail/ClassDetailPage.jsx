@@ -5,8 +5,6 @@ import { apiUtils } from "../../../../utils/newRequest";
 import "./ClassDetailPage.css";
 import CreateStudent from "../createModal/CreateStudent";
 import { useAuth } from "../../../../context/auth/AuthContext";
-
-// ✅ NEW: panels
 import NotesPanel from "./NotesPanel/NotesPanel";
 import FeedbackPanel from "./FeedbackPanel/FeedbackPanel";
 
@@ -119,9 +117,7 @@ export default function ClassDetailPage() {
 
     const [startDate, setStartDate] = useState(() => {
         const now = new Date();
-        return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(
-            now.getDate(),
-        )}`;
+        return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
     });
 
     const [displayDate, setDisplayDate] = useState(() => isoToDMY(startDate));
@@ -152,7 +148,6 @@ export default function ClassDetailPage() {
                 const res = await apiUtils.get(`/classes/${classId}`);
                 const data = res?.data?.metadata || res?.data || {};
                 const klass = data.class || data;
-
                 if (!alive) return;
 
                 setCls(klass);
@@ -210,7 +205,6 @@ export default function ClassDetailPage() {
     /** ===== fetch attendance records ===== */
     useEffect(() => {
         if (!classId) return;
-
         let alive = true;
 
         (async () => {
@@ -261,7 +255,6 @@ export default function ClassDetailPage() {
                             };
                         }
                     }
-
                     return next;
                 });
             } catch {
@@ -287,10 +280,7 @@ export default function ClassDetailPage() {
 
             next[studentId] = {
                 ...cur,
-                [type]: {
-                    ...(cur[type] || {}),
-                    [dateKey]: value,
-                },
+                [type]: { ...(cur[type] || {}), [dateKey]: value },
             };
             return next;
         });
@@ -323,10 +313,7 @@ export default function ClassDetailPage() {
     const markAttendancePending = (studentId, dateKey, value) => {
         setPendingAttendance((prev) => {
             const cur = prev[studentId] || {};
-            return {
-                ...prev,
-                [studentId]: { ...cur, [dateKey]: value },
-            };
+            return { ...prev, [studentId]: { ...cur, [dateKey]: value } };
         });
     };
 
@@ -357,7 +344,10 @@ export default function ClassDetailPage() {
         });
 
         const tuitionChanges = Object.entries(pendingTuition).map(
-            ([studentId, tuition]) => ({ studentId, tuition: !!tuition }),
+            ([studentId, tuition]) => ({
+                studentId,
+                tuition: !!tuition,
+            }),
         );
 
         if (!changes.length && !tuitionChanges.length) {
@@ -370,7 +360,6 @@ export default function ClassDetailPage() {
                 changes,
                 tuitionChanges,
             });
-
             exitAttendanceEditMode();
         } catch (err) {
             console.error(err);
@@ -398,22 +387,20 @@ export default function ClassDetailPage() {
         cls?.scheduleText || "",
     );
     const nextSessionSubLabel = nextSession
-        ? `${fmtDMY(nextSession)}${
-              nextSessionTimeLabel ? `, ${nextSessionTimeLabel}` : ""
-          }`
+        ? `${fmtDMY(nextSession)}${nextSessionTimeLabel ? `, ${nextSessionTimeLabel}` : ""}`
         : "—";
+
+    const students = cls.students || [];
 
     return (
         <div className="cd-wrap">
+            {/* ===== HEADER ===== */}
             <div className="cd-top">
                 <div className="cd-title">
                     {cls.name || cls.className || "{classes.name}"}
                 </div>
-                <div className="cd-schedule">
-                    {cls.scheduleText || "Mon, Wed, Fri - 9:00 AM"}
-                </div>
 
-                <div style={{ display: "flex", gap: 10 }}>
+                <div className="cd-top-actions">
                     <button
                         className="cd-btn"
                         type="button"
@@ -432,6 +419,10 @@ export default function ClassDetailPage() {
                     >
                         + Student
                     </button>
+                </div>
+
+                <div className="cd-schedule">
+                    {cls.scheduleText || "Mon, Wed, Fri - 9:00 AM"}
                 </div>
             </div>
 
@@ -483,6 +474,7 @@ export default function ClassDetailPage() {
                 }}
             />
 
+            {/* ===== STATS ===== */}
             <div className="cd-stats">
                 <div className="cd-stat">
                     <div className="cd-stat-label">Total Students</div>
@@ -509,7 +501,7 @@ export default function ClassDetailPage() {
                 </div>
             </div>
 
-            {/* ===== STUDENTS + MINI ATTENDANCE TABLE (3 sessions) ===== */}
+            {/* ===== STUDENTS ===== */}
             <div className="cd-section">
                 <div className="cd-section-head">
                     <h2>Students</h2>
@@ -542,7 +534,7 @@ export default function ClassDetailPage() {
                                 />
 
                                 <input
-                                    id="datePicker"
+                                    id="cdDatePicker"
                                     className="cd-real-date"
                                     type="date"
                                     value={startDate}
@@ -557,7 +549,7 @@ export default function ClassDetailPage() {
                                     onClick={() => {
                                         const el =
                                             document.getElementById(
-                                                "datePicker",
+                                                "cdDatePicker",
                                             );
                                         if (!el) return;
                                         if (el.showPicker) el.showPicker();
@@ -585,6 +577,7 @@ export default function ClassDetailPage() {
                     </div>
                 </div>
 
+                {/* ===== TABLE (desktop/tablet) ===== */}
                 <div className="cd-table-wrap">
                     <table className="cd-table cd-table-att">
                         <thead>
@@ -606,7 +599,7 @@ export default function ClassDetailPage() {
                         </thead>
 
                         <tbody>
-                            {(cls.students || []).map((s, idx) => {
+                            {students.map((s, idx) => {
                                 const studentId =
                                     s._id ||
                                     s.id ||
@@ -644,7 +637,6 @@ export default function ClassDetailPage() {
                                                                 dk,
                                                                 val,
                                                             );
-
                                                             markAttendancePending(
                                                                 studentId,
                                                                 dk,
@@ -714,7 +706,7 @@ export default function ClassDetailPage() {
                                 );
                             })}
 
-                            {(cls.students || []).length === 0 && (
+                            {students.length === 0 && (
                                 <tr>
                                     <td
                                         colSpan={
@@ -730,16 +722,142 @@ export default function ClassDetailPage() {
                     </table>
                 </div>
 
+                {/* ===== CARD LIST (mobile) ===== */}
+                <div className="cd-cards">
+                    {students.map((s, idx) => {
+                        const studentId =
+                            s._id ||
+                            s.id ||
+                            s.email ||
+                            s.fullName ||
+                            s.name ||
+                            String(idx);
+
+                        const name = s.fullName || s.name || "—";
+
+                        return (
+                            <div className="cd-card" key={`card-${studentId}`}>
+                                <div className="cd-card-head">
+                                    <div className="cd-card-no">#{idx + 1}</div>
+                                    <div className="cd-card-name" title={name}>
+                                        {name}
+                                    </div>
+                                </div>
+
+                                <div className="cd-card-grid">
+                                    {sessionDates.map((d, i) => {
+                                        const dk = dateKeys[i];
+                                        const att =
+                                            !!checkState?.[studentId]
+                                                ?.attendance?.[dk];
+                                        const hw =
+                                            !!checkState?.[studentId]
+                                                ?.homework?.[dk];
+
+                                        return (
+                                            <div
+                                                className="cd-card-row"
+                                                key={`card-row-${studentId}-${i}`}
+                                            >
+                                                <div className="cd-card-date">
+                                                    {fmtDMY(d)}
+                                                </div>
+
+                                                <label className="cd-chip">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={att}
+                                                        onChange={(e) => {
+                                                            enterAttendanceEditMode();
+                                                            const val =
+                                                                e.target
+                                                                    .checked;
+                                                            toggleLocal(
+                                                                studentId,
+                                                                "attendance",
+                                                                dk,
+                                                                val,
+                                                            );
+                                                            markAttendancePending(
+                                                                studentId,
+                                                                dk,
+                                                                val,
+                                                            );
+                                                        }}
+                                                    />
+                                                    <span>Attendance</span>
+                                                </label>
+
+                                                <label className="cd-chip">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={hw}
+                                                        onChange={(e) => {
+                                                            enterAttendanceEditMode();
+                                                            const val =
+                                                                e.target
+                                                                    .checked;
+                                                            toggleLocal(
+                                                                studentId,
+                                                                "homework",
+                                                                dk,
+                                                                val,
+                                                            );
+                                                            markHomeworkPending(
+                                                                studentId,
+                                                                dk,
+                                                                val,
+                                                            );
+                                                        }}
+                                                    />
+                                                    <span>Homework</span>
+                                                </label>
+                                            </div>
+                                        );
+                                    })}
+
+                                    <div className="cd-card-row cd-card-row-last">
+                                        <div className="cd-card-date">
+                                            Tuition fee
+                                        </div>
+                                        <label className="cd-chip cd-chip-wide">
+                                            <input
+                                                type="checkbox"
+                                                checked={
+                                                    !!checkState?.[studentId]
+                                                        ?.tuition
+                                                }
+                                                onChange={(e) => {
+                                                    enterAttendanceEditMode();
+                                                    const val =
+                                                        e.target.checked;
+                                                    toggleLocal(
+                                                        studentId,
+                                                        "tuition",
+                                                        null,
+                                                        val,
+                                                    );
+                                                    markTuitionPending(
+                                                        studentId,
+                                                        val,
+                                                    );
+                                                }}
+                                            />
+                                            <span>Paid</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    {students.length === 0 && (
+                        <div className="cd-empty-card">No students</div>
+                    )}
+                </div>
+
                 {isEditingAttendance && (
-                    <div
-                        className="cd-actions"
-                        style={{
-                            marginTop: 14,
-                            display: "flex",
-                            justifyContent: "flex-end",
-                            gap: 10,
-                        }}
-                    >
+                    <div className="cd-actions">
                         <button
                             type="button"
                             className="cd-btn-cancel"
@@ -769,7 +887,7 @@ export default function ClassDetailPage() {
                 />
             )}
 
-            {/* ===== FEEDBACK PANEL (QR) ===== */}
+            {/* ===== FEEDBACK PANEL ===== */}
             <FeedbackPanel classId={classId} role={role} userInfo={userInfo} />
         </div>
     );

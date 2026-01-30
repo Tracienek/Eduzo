@@ -7,10 +7,6 @@ const Header = () => {
         <header className="lp-header">
             <div className="lp-container">
                 <div className="lp-nav">
-                    {/* <div className="lp-brand">
-                            <div className="lp-brand-badge">E</div>
-                            <span>EDUZO</span>
-                        </div> */}
                     <Link to="/" className="lp-brand">
                         <img
                             src={logo}
@@ -19,32 +15,14 @@ const Header = () => {
                         />
                         <span className="lp-brand-text">EDUZO</span>
                     </Link>
-                    <nav
-                        // className={`se-nav ${
-                        //     isMobileOpen ? "se-nav--open" : ""
-                        // }`}
-                        // aria-hidden={!isMobileOpen}
-                        className="lp-actions"
-                    >
-                        <Link
-                            to="/"
-                            className="lp-links"
-                            // onClick={closeMobile}
-                        >
+                    <nav className="lp-links-wrap">
+                        <Link to="/" className="lp-links">
                             Home
                         </Link>
-                        <Link
-                            to="/about"
-                            className="lp-links"
-                            // onClick={closeMobile}
-                        >
+                        <Link to="/#about" className="lp-links">
                             About us
                         </Link>
-                        <Link
-                            to="/services"
-                            className="lp-links"
-                            // onClick={closeMobile}
-                        >
+                        <Link to="/services" className="lp-links">
                             Services
                         </Link>
                     </nav>

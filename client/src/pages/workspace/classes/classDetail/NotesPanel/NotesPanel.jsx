@@ -6,6 +6,23 @@ import "../ClassDetailPage.css";
 
 const getMyId = (userInfo) => userInfo?._id || userInfo?.userId;
 
+const pad2 = (n) => String(n).padStart(2, "0");
+
+// Force DD/MM/YYYY (optionally with HH:MM) regardless of system locale
+const formatDDMMYYYY_HHMM = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+
+    const dd = pad2(d.getDate());
+    const mm = pad2(d.getMonth() + 1);
+    const yyyy = d.getFullYear();
+    const hh = pad2(d.getHours());
+    const mi = pad2(d.getMinutes());
+
+    return `${dd}/${mm}/${yyyy} ${hh}:${mi}`;
+};
+
 export default function NotesPanel({
     classId,
     role,
@@ -53,10 +70,8 @@ export default function NotesPanel({
             return;
         }
 
-        // teacher <-> center
         const toRole = role === "teacher" ? "center" : "teacher";
 
-        // ✅ Guard: teacher must have centerId (to send notification correctly)
         if (role === "teacher" && !userInfo?.centerId) {
             alert("centerId is missing on this account");
             return;
@@ -109,7 +124,7 @@ export default function NotesPanel({
                     placeholder={
                         role === "teacher"
                             ? "Write a note for Center (shows in Center notifications)..."
-                            : "Write a note for Teacher (shows in Teacher notifications)..."
+                            : "Write a note for Teacher (shows in Teachers notifications)..."
                     }
                 />
 
@@ -123,7 +138,7 @@ export default function NotesPanel({
                         {noteLoading ? "Sending..." : "Send note"}
                     </button>
 
-                    <button
+                    {/* <button
                         type="button"
                         className="cd-btn"
                         onClick={fetchNotes}
@@ -132,7 +147,7 @@ export default function NotesPanel({
                         title="Refresh notes"
                     >
                         Refresh
-                    </button>
+                    </button> */}
                 </div>
             </div>
 
@@ -153,21 +168,15 @@ export default function NotesPanel({
                     notes.map((n) => (
                         <div className="cd-note-item" key={n._id}>
                             <div className="cd-note-meta">
-                                <span className="cd-note-role">
-                                    {n.fromRole} → {n.toRole}
-                                </span>
+                                {!!classNameValue && !!n.classId && (
+                                    <div className="cd-note-sub">
+                                        Class: {classNameValue}
+                                    </div>
+                                )}
                                 <span className="cd-note-time">
-                                    {n?.createdAt
-                                        ? new Date(n.createdAt).toLocaleString()
-                                        : ""}
+                                    {formatDDMMYYYY_HHMM(n?.createdAt)}
                                 </span>
                             </div>
-
-                            {!!classNameValue && !!n.classId && (
-                                <div className="cd-note-sub">
-                                    Class: {classNameValue}
-                                </div>
-                            )}
 
                             <div className="cd-note-msg">{n.content || ""}</div>
                         </div>

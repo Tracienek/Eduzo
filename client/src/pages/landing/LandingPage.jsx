@@ -77,7 +77,7 @@ export default function LandingPage() {
                         </p>
 
                         <div className="landing-hero-actions">
-                            <Link className="lp-btn" to="/auth/sign-up">
+                            <Link className="lp-btn" to="/auth/signUp">
                                 Get Started
                             </Link>
                         </div>
@@ -113,7 +113,9 @@ export default function LandingPage() {
             <section className="lp-about" id="about">
                 <div className="lp-container">
                     <div className="lp-about-text">
-                        <h2 className="lp-section-title">About EDUZO</h2>
+                        <h2 className="lp-section-title" id="about">
+                            About EDUZO
+                        </h2>
                         <p className="lp-about-subtitle">
                             EDUZO is a student-developed education platform
                             created to simplify classroom management and improve
@@ -148,7 +150,7 @@ export default function LandingPage() {
                             feedback.
                         </p>
                         <div className="landing-hero-actions">
-                            <Link className="lp-btn" to="/auth/sign-up">
+                            <Link className="lp-btn" to="/auth/signUp">
                                 Get Started
                             </Link>
                         </div>

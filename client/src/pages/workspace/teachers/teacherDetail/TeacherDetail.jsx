@@ -124,6 +124,8 @@ export default function TeacherDetail() {
     const avatarUrl =
         resolveAvatar(teacher?.avatar || teacher?.photoUrl) || teacherFallback;
 
+    const teacherName = safeText(teacher?.fullName || teacher?.name);
+
     return (
         <div className="td-wrap">
             <div className="td-topbar">
@@ -132,8 +134,12 @@ export default function TeacherDetail() {
                     type="button"
                     onClick={() => navigate(-1)}
                 >
-                    ← Back
+                    Back
                 </button>
+
+                <div className="td-title" title={teacherName}>
+                    {teacherName}
+                </div>
             </div>
 
             <div className="td-grid">
@@ -149,9 +155,7 @@ export default function TeacherDetail() {
                         />
                     </div>
 
-                    <div className="td-name">
-                        {safeText(teacher?.fullName || teacher?.name)}
-                    </div>
+                    <div className="td-name">{teacherName}</div>
 
                     <div className="td-meta">
                         <div className="td-row">

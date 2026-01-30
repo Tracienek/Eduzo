@@ -20,7 +20,7 @@ import PublicLayout from "./components/layout/PublicLayout.jsx";
 import WorkspaceLayout from "./pages/workspace/WorkspaceLayout.jsx";
 import ClassesPage from "./pages/workspace/classes/ClassesPage.jsx";
 import ClassDetailPage from "./pages/workspace/classes/classDetail/ClassDetailPage.jsx";
-import FullAttendancePage from "./pages/workspace/classes/attendance/FullAttendancePage.jsx";
+import FullAttendancePage from "./pages/workspace/classes/classDetail/attendance/FullAttendancePage.jsx";
 import TeachersPanel from "./pages/workspace/teachers/TeacherPage.jsx";
 import ProfilePage from "./pages/workspace/profile/ProfilePage.jsx";
 import TeacherDetail from "./pages/workspace/teachers/teacherDetail/TeacherDetail.jsx";

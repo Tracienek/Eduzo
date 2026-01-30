@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiUtils } from "../../../utils/newRequest";
 import "./ClassesPage.css";
+import { useAuth } from "../../../context/auth/AuthContext";
 
 function ClassCard({ c, onOpen, onDelete }) {
     const isOnline = !!c?.isOnline;
@@ -78,6 +79,12 @@ export default function ClassesPage() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [classes, setClasses] = useState([]);
+    const { userInfo } = useAuth();
+
+    const pageTitle =
+        userInfo?.role === "center"
+            ? `${userInfo?.fullName || "Center"}’s Classes`
+            : "My Classes";
 
     const fetchClasses = async (setLoadingFlag = false) => {
         try {
@@ -88,8 +95,8 @@ export default function ClassesPage() {
             const list = Array.isArray(data.classes)
                 ? data.classes
                 : Array.isArray(data)
-                ? data
-                : [];
+                  ? data
+                  : [];
 
             setClasses(list);
         } catch {
@@ -122,19 +129,19 @@ export default function ClassesPage() {
 
     const onlineClasses = useMemo(
         () => classes.filter((c) => !!c?.isOnline),
-        [classes]
+        [classes],
     );
 
     const offlineClasses = useMemo(
         () => classes.filter((c) => !c?.isOnline),
-        [classes]
+        [classes],
     );
 
     const handleDelete = async (cls) => {
         const ok = window.confirm(
             `Delete class "${
                 cls?.name || "Unnamed"
-            }"?\nThis action cannot be undone.`
+            }"?\nThis action cannot be undone.`,
         );
         if (!ok) return;
 
@@ -176,7 +183,7 @@ export default function ClassesPage() {
 
             {/* ===== Your Classes (Offline) ===== */}
             <div className="classes-page-header" style={{ marginTop: 18 }}>
-                <h2>Your Classes</h2>
+                <h2 title={pageTitle}>{pageTitle}</h2>
             </div>
 
             {!loading && offlineClasses.length === 0 && (

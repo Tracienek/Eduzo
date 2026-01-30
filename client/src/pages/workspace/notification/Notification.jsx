@@ -1,5 +1,4 @@
 // client/src/pages/workspace/notification/Notification.jsx
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/auth/AuthContext";
@@ -39,7 +38,6 @@ export default function NotificationsPage() {
         myId ? (n.readBy || []).some((x) => String(x) === String(myId)) : false;
 
     const openNoti = async (n) => {
-        // mark read
         if (!isRead(n)) {
             try {
                 await markNotificationRead(n._id);
@@ -55,7 +53,6 @@ export default function NotificationsPage() {
             }
         }
 
-        // navigate to class detail if available
         if (n.classId) navigate(`/workspace/classes/${n.classId}`);
     };
 
@@ -78,13 +75,16 @@ export default function NotificationsPage() {
 
                 <div className="noti-actions">
                     <button
+                        type="button"
                         className="noti-btn"
                         onClick={refresh}
                         disabled={loading}
                     >
                         Refresh
                     </button>
+
                     <button
+                        type="button"
                         className="noti-btn-primary"
                         onClick={markAll}
                         disabled={loading || !items.length}
@@ -103,6 +103,7 @@ export default function NotificationsPage() {
             <div className="noti-list">
                 {items.map((n) => {
                     const read = isRead(n);
+
                     return (
                         <button
                             type="button"
@@ -112,12 +113,18 @@ export default function NotificationsPage() {
                             title={n.classId ? "Open class detail" : "Open"}
                         >
                             <div className="noti-item-top">
-                                {/* <div className="noti-item-title">{n.title}</div> */}
                                 <div className="noti-item-time">
                                     {n.createdAt
                                         ? new Date(n.createdAt).toLocaleString()
                                         : ""}
                                 </div>
+
+                                {!read && (
+                                    <span
+                                        className="noti-dot"
+                                        aria-hidden="true"
+                                    />
+                                )}
                             </div>
 
                             {!!n.className && (

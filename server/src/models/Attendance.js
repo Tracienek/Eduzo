@@ -1,3 +1,4 @@
+// server/src/models/Attendance.js
 const mongoose = require("mongoose");
 
 const AttendanceSchema = new mongoose.Schema(
@@ -19,12 +20,12 @@ const AttendanceSchema = new mongoose.Schema(
         homework: { type: Boolean, default: false },
         tuition: { type: Boolean, default: false },
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 AttendanceSchema.index(
     { classId: 1, studentId: 1, dateKey: 1 },
-    { unique: true }
+    { unique: true },
 );
 
 module.exports =
