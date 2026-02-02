@@ -44,9 +44,9 @@
 }
 
 .lp-brand-text {
-    font-size: 22px;
-    letter-spacing: 2.5px;
-    color: var(--text-color-dark);
+    font-size: 20px;
+    letter-spacing: 2px;
+    color: #983cad;
 }
 
 .lp-brand-text:hover {
@@ -68,11 +68,11 @@
     padding: 6px 30px;
     font-size: 16px;
     text-decoration: none;
-    color: var(--text-color-dark);
+    color: #983cad;
+    font-weight: bold;
     border-radius: 999px;
     white-space: nowrap;
-    transition:
-        color 0.25s ease,
+    transition: color 0.25s ease,
         transform 0.25s ease;
 }
 
@@ -114,11 +114,7 @@
 .lp-action-btn {
     padding: 10px 14px;
     border-radius: 10px;
-    background: linear-gradient(
-        90deg,
-        var(--primary-color),
-        var(--secondary-color)
-    );
+    background: linear-gradient(180deg, var(--primary-color), #d0bbe5);
     color: white;
     font-weight: 800;
     font-size: 13px;

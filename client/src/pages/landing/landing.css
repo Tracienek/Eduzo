@@ -2,7 +2,7 @@
 
 .lp-page {
     background: var(--bg);
-    color: var(--text-color-dark);
+    color: #983cad;
 }
 
 /* ---------- Container ---------- */
@@ -40,7 +40,7 @@
 .lp-hero-desc {
     margin: 14px auto 22px;
     font-size: 14px;
-    color: #5b5b5b;
+    color: #983cad;
     line-height: 1.6;
 }
 
@@ -60,17 +60,11 @@
     font-weight: 800;
     font-size: 13px;
     text-decoration: none;
-    border: 1px solid rgba(0, 0, 0, 0.12);
-    transition:
-        transform 180ms ease,
+    transition: transform 180ms ease,
         filter 180ms ease,
         box-shadow 180ms ease;
     color: #fff;
-    background: linear-gradient(
-        90deg,
-        var(--primary-color),
-        var(--secondary-color)
-    );
+    background: var(--primary-color);
 }
 
 .lp-btn:hover {
@@ -175,7 +169,7 @@
 /* ---------- About ---------- */
 .lp-about-subtitle {
     margin: 40px auto;
-    color: var(--text-color-dark);
+    color: var(--tertiary-color);
     font-size: 16px;
     line-height: 1.6;
 }
@@ -185,7 +179,7 @@
     border-radius: 14px;
     border: 1px solid var(--border-color);
     background: linear-gradient(
-        180deg,
+        360deg,
         var(--light-purple),
         var(--secondary-color)
     );

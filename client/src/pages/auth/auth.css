@@ -78,6 +78,7 @@
 
 .auth-brand-text {
     line-height: 1;
+    color: #983cad;
 }
 
 .auth-brand-logo {
@@ -91,6 +92,7 @@
     margin: 0;
     font-size: 24px;
     font-weight: 700;
+    color: #983cad;
 }
 
 .auth-subtitle {
@@ -115,7 +117,8 @@
 
 .auth-label {
     font-size: 14px;
-    color: #000000;
+    color: #983cad;
+    font-weight: bold;
 }
 
 .auth-input-wrap {
@@ -163,13 +166,9 @@
     height: 40px;
     border: none;
     border-radius: 10px;
-    background: linear-gradient(
-        90deg,
-        var(--primary-color),
-        var(--secondary-color)
-    );
+    background: var(--primary-color);
     color: white;
-    font-weight: 300;
+    font-weight: bold;
     cursor: pointer;
 }
 
@@ -306,7 +305,7 @@ input::-webkit-credentials-auto-fill-button {
     }
 
     .auth-title {
-        font-size: 22px;
+        font-size: 28px;
     }
 
     .auth-subtitle {
