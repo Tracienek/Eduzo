@@ -1,3 +1,4 @@
+// server/src/models/Feedback.js
 const mongoose = require("mongoose");
 
 const FeedbackSchema = new mongoose.Schema(
@@ -8,34 +9,39 @@ const FeedbackSchema = new mongoose.Schema(
             required: true,
             index: true,
         },
-        centerId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true,
-        },
-        className: { type: String, default: "" },
 
-        studentName: { type: String, default: "" },
-
+        // optional: if feedback is for a teacher
         teacherId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "User",
-            required: true,
+            default: null,
             index: true,
         },
-        teacherName: { type: String, default: "" },
 
-        rating: { type: Number, min: 1, max: 5, default: 5 },
-        understand: { type: Number, min: 1, max: 5, default: 5 },
-        teachingWay: { type: Number, min: 1, max: 5, default: 5 },
+        // optional: who submitted (if we can map to a Student)
+        studentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Student",
+            default: null,
+            index: true,
+        },
 
-        message: { type: String, required: true, trim: true },
+        studentName: { type: String, required: true, trim: true },
+
+        // 1 -> 5
+        rating: { type: Number, required: true, min: 1, max: 5 },
+
+        comment: { type: String, default: "", trim: true, maxlength: 1200 },
+
+        // metadata
+        className: { type: String, default: "", trim: true },
+        teacherName: { type: String, default: "", trim: true },
+        source: { type: String, default: "qr", trim: true }, // "qr" | "web" ...
+        ip: { type: String, default: "" },
+        userAgent: { type: String, default: "" },
     },
     { timestamps: true },
 );
 
-FeedbackSchema.index({ classId: 1, createdAt: -1 });
-FeedbackSchema.index({ centerId: 1, createdAt: -1 });
-
-module.exports = mongoose.model("Feedback", FeedbackSchema);
+module.exports =
+    mongoose.models.Feedback || mongoose.model("Feedback", FeedbackSchema);

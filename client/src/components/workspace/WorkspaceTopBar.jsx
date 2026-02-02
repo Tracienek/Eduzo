@@ -25,6 +25,7 @@ const resolveAvatar = (url) => {
 export default function WorkspaceTopBar() {
     const { userInfo, logout } = useAuth();
     const role = userInfo?.role;
+    // const isCenter = userInfo?.role === "center";
 
     const [openCreate, setOpenCreate] = useState(false);
 

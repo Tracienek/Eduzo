@@ -1,8 +1,16 @@
 // server/src/controllers/attendance.controller.js
-
 const mongoose = require("mongoose");
 const Attendance = require("../models/Attendance");
+const ClassSession = require("../models/ClassSession");
+const ClassModel = require("../models/Class");
+const User = require("../models/User");
+const { sendMail } = require("../utils/mailer");
+
 const TUITION_KEY = "__TUITION__";
+const TUITION_THRESHOLD = 12;
+
+// Helper: validate YYYY-MM-DD
+const isISODateKey = (s) => /^\d{4}-\d{2}-\d{2}$/.test(String(s || ""));
 
 exports.getByDates = async (req, res) => {
     try {
@@ -17,7 +25,7 @@ exports.getByDates = async (req, res) => {
             .map((x) => x.trim())
             .filter(Boolean);
 
-        // lấy dates + tuition record
+        // get requested dates + tuition special record
         const records = await Attendance.find({
             classId: classObjectId,
             dateKey: { $in: [...dates, TUITION_KEY] },
@@ -51,6 +59,9 @@ exports.bulkSaveAttendance = async (req, res) => {
         // attendance + homework per date
         for (const c of changes) {
             if (!c?.studentId || !c?.dateKey) continue;
+
+            // protect against invalid dateKey format (optional)
+            if (c.dateKey !== TUITION_KEY && !isISODateKey(c.dateKey)) continue;
 
             const set = {};
             if (typeof c.attendance === "boolean")
@@ -103,14 +114,121 @@ exports.bulkSaveAttendance = async (req, res) => {
             });
         }
 
-        if (!ops.length) return res.json({ metadata: { saved: 0 } });
+        if (!ops.length) {
+            // still return heldCount so FE can show correct state
+            const heldCount = await ClassSession.countDocuments({
+                classId: classObjectId,
+                held: true,
+            });
+
+            return res.json({ metadata: { saved: 0, heldCount } });
+        }
+
+        // count before (to detect "crossing" 12)
+        const heldCountBefore = await ClassSession.countDocuments({
+            classId: classObjectId,
+            held: true,
+        });
 
         const result = await Attendance.bulkWrite(ops, { ordered: false });
+
+        // 1) Determine which dateKeys were edited (exclude tuition)
+        const changedDateKeys = Array.from(
+            new Set(
+                changes
+                    .map((c) => String(c?.dateKey || "").trim())
+                    .filter(
+                        (dk) => dk && dk !== TUITION_KEY && isISODateKey(dk),
+                    ),
+            ),
+        );
+
+        // 2) Mark session as held ONLY if any student has attendance=true OR homework=true for that dateKey
+        if (changedDateKeys.length) {
+            const heldDateKeys = [];
+
+            // NOTE: simple loop, safe and clear
+            for (const dk of changedDateKeys) {
+                const anyTrue = await Attendance.exists({
+                    classId: classObjectId,
+                    dateKey: dk,
+                    $or: [{ attendance: true }, { homework: true }],
+                });
+
+                if (anyTrue) heldDateKeys.push(dk);
+            }
+
+            if (heldDateKeys.length) {
+                const sessionOps = heldDateKeys.map((dk) => ({
+                    updateOne: {
+                        filter: { classId: classObjectId, dateKey: dk },
+                        update: {
+                            $set: { held: true },
+                            $setOnInsert: {
+                                classId: classObjectId,
+                                dateKey: dk,
+                            },
+                        },
+                        upsert: true,
+                    },
+                }));
+
+                await ClassSession.bulkWrite(sessionOps, { ordered: false });
+            }
+        }
+
+        // 3) Recount held sessions after updates
+        const heldCountAfter = await ClassSession.countDocuments({
+            classId: classObjectId,
+            held: true,
+        });
+
+        // 4) Send ONLY the center milestone email ONCE when crossing threshold
+        //    - "system just send email for center to announce reach 12 sessions"
+        const crossedThreshold =
+            heldCountBefore < TUITION_THRESHOLD &&
+            heldCountAfter >= TUITION_THRESHOLD;
+
+        if (crossedThreshold) {
+            const klass = await ClassModel.findById(classObjectId)
+                .select("centerId tuitionMilestoneNotifiedAt name")
+                .lean();
+
+            // send once only
+            if (klass?.centerId && !klass.tuitionMilestoneNotifiedAt) {
+                const center = await User.findById(klass.centerId)
+                    .select("email")
+                    .lean();
+
+                if (center?.email) {
+                    try {
+                        await sendMail({
+                            to: center.email,
+                            subject: `Class reached ${TUITION_THRESHOLD} sessions (${klass.name || "Class"})`,
+                            text: `This class "${klass.name || "Class"}" has reached ${TUITION_THRESHOLD} held sessions. You can now send tuition emails.`,
+                        });
+
+                        await ClassModel.updateOne(
+                            { _id: classObjectId },
+                            {
+                                $set: {
+                                    tuitionMilestoneNotifiedAt: new Date(),
+                                },
+                            },
+                        );
+                    } catch (e) {
+                        // do not fail attendance save if email fails
+                        console.error("Milestone email failed:", e.message);
+                    }
+                }
+            }
+        }
 
         return res.json({
             metadata: {
                 saved:
                     (result?.modifiedCount || 0) + (result?.upsertedCount || 0),
+                heldCount: heldCountAfter,
             },
         });
     } catch (err) {
@@ -125,16 +243,13 @@ exports.getByRange = async (req, res) => {
         const to = String(req.query.to || "").trim();
 
         // validate basic ISO YYYY-MM-DD
-        if (
-            !/^\d{4}-\d{2}-\d{2}$/.test(from) ||
-            !/^\d{4}-\d{2}-\d{2}$/.test(to)
-        ) {
+        if (!isISODateKey(from) || !isISODateKey(to)) {
             return res
                 .status(400)
                 .json({ message: "from/to must be YYYY-MM-DD" });
         }
 
-        // lấy cả attendance trong khoảng ngày + tuition record (dateKey đặc biệt)
+        // get attendance in date range + tuition special record
         const records = await Attendance.find({
             classId,
             $or: [

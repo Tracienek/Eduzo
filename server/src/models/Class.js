@@ -22,6 +22,10 @@ const ClassSchema = new mongoose.Schema(
         onlineUntil: { type: Date, default: null, index: true },
 
         durationMinutes: { type: Number, default: 90 },
+        tuitionMilestoneNotifiedAt: { type: Date, default: null },
+        tuitionEmailSentAt: { type: Date, default: null },
+        tuitionMilestoneNotifiedAt: { type: Date, default: null },
+        tuitionEmailSentAt: { type: Date, default: null },
     },
     { timestamps: true },
 );

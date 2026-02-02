@@ -91,6 +91,7 @@ const DAY_NAME = [
 ];
 
 const TUITION_KEY = "__TUITION__";
+const TUITION_THRESHOLD = 12;
 
 const extractTimeFromSchedule = (scheduleText = "") => {
     const parts = scheduleText.split("-").map((s) => s.trim());
@@ -104,14 +105,17 @@ const toLocalISODate = (d) => {
     return `${y}-${m}-${day}`;
 };
 
+// ✅ Stable student id: only backend id
+const getStudentId = (s) => String(s?._id || s?.id || "");
+
 export default function ClassDetailPage() {
     const { classId } = useParams();
     const navigate = useNavigate();
     const { userInfo } = useAuth();
 
     const role = userInfo?.role;
-
     const canUseNotes = role === "teacher" || role === "center";
+    const canSendTuition = role === "center";
 
     const [openStudent, setOpenStudent] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -131,6 +135,10 @@ export default function ClassDetailPage() {
     const [pendingAttendance, setPendingAttendance] = useState({});
     const [pendingHomework, setPendingHomework] = useState({});
     const [pendingTuition, setPendingTuition] = useState({});
+
+    // ✅ sessions held summary
+    const [heldCount, setHeldCount] = useState(0);
+    const [sendingTuition, setSendingTuition] = useState(false);
 
     const ensureStudentState = (studentId, base) => {
         if (base[studentId]) return base;
@@ -155,14 +163,9 @@ export default function ClassDetailPage() {
                 setCls(klass);
 
                 const init = {};
-                (klass.students || []).forEach((s, idx) => {
-                    const id =
-                        s._id ||
-                        s.id ||
-                        s.email ||
-                        s.fullName ||
-                        s.name ||
-                        String(idx);
+                (klass.students || []).forEach((s) => {
+                    const id = getStudentId(s);
+                    if (!id) return; // ignore invalid
                     init[id] = {
                         attendance: {},
                         homework: {},
@@ -247,6 +250,7 @@ export default function ClassDetailPage() {
                                 },
                             };
                         }
+
                         if (typeof r.homework === "boolean") {
                             next[sid] = {
                                 ...next[sid],
@@ -268,6 +272,25 @@ export default function ClassDetailPage() {
             alive = false;
         };
     }, [classId, dateKeys]);
+
+    /** ===== fetch sessions summary (heldCount) ===== */
+    const fetchSessionSummary = async () => {
+        try {
+            const res = await apiUtils.get(
+                `/classes/${classId}/sessions/summary`,
+            );
+            const meta = res?.data?.metadata || {};
+            setHeldCount(Number(meta.heldCount || 0));
+        } catch {
+            // ignore
+        }
+    };
+
+    useEffect(() => {
+        if (!classId) return;
+        fetchSessionSummary();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [classId]);
 
     const toggleLocal = (studentId, type, dateKey, value) => {
         setCheckState((prev) => {
@@ -358,10 +381,20 @@ export default function ClassDetailPage() {
         }
 
         try {
-            await apiUtils.patch(`/classes/${classId}/attendance/bulk`, {
-                changes,
-                tuitionChanges,
-            });
+            const res = await apiUtils.patch(
+                `/classes/${classId}/attendance/bulk`,
+                {
+                    changes,
+                    tuitionChanges,
+                },
+            );
+
+            // ✅ if BE returns heldCount, use it; else refetch summary
+            const meta = res?.data?.metadata || {};
+            if (typeof meta.heldCount === "number")
+                setHeldCount(meta.heldCount);
+            else fetchSessionSummary();
+
             exitAttendanceEditMode();
         } catch (err) {
             console.error(err);
@@ -376,6 +409,25 @@ export default function ClassDetailPage() {
         const snap = snapshotRef.current;
         if (snap) setCheckState(snap);
         exitAttendanceEditMode();
+    };
+
+    const sendTuitionEmail = async () => {
+        if (!canSendTuition) return;
+        if (heldCount < TUITION_THRESHOLD) return;
+
+        try {
+            setSendingTuition(true);
+            const res = await apiUtils.post(`/classes/${classId}/tuition/send`);
+            const meta = res?.data?.metadata || {};
+            alert(`Tuition emails sent: ${meta.sent || 0}/${meta.total || 0}`);
+        } catch (err) {
+            alert(
+                err?.response?.data?.message ||
+                    "Failed to send tuition emails.",
+            );
+        } finally {
+            setSendingTuition(false);
+        }
     };
 
     if (loading) return <div className="cd-muted">Loading...</div>;
@@ -455,13 +507,8 @@ export default function ClassDetailPage() {
                         };
                     });
 
-                    const id =
-                        createdStudent._id ||
-                        createdStudent.id ||
-                        createdStudent.email ||
-                        createdStudent.fullName ||
-                        createdStudent.name ||
-                        String(Date.now());
+                    const id = getStudentId(createdStudent);
+                    if (!id) return;
 
                     setCheckState((prev) => ({
                         ...prev,
@@ -501,6 +548,19 @@ export default function ClassDetailPage() {
                     </div>
                     <div className="cd-stat-sub">Per session</div>
                 </div>
+
+                {/* ✅ NEW: Sessions held */}
+                <div className="cd-stat">
+                    <div className="cd-stat-label">Sessions held</div>
+                    <div className="cd-stat-value">
+                        {heldCount}/{TUITION_THRESHOLD}
+                    </div>
+                    <div className="cd-stat-sub">
+                        {heldCount >= TUITION_THRESHOLD
+                            ? "Tuition unlocked"
+                            : "Not ready"}
+                    </div>
+                </div>
             </div>
 
             {/* ===== STUDENTS ===== */}
@@ -509,6 +569,37 @@ export default function ClassDetailPage() {
                     <h2>Students</h2>
 
                     <div className="cd-controls">
+                        {/* ✅ center-only send tuition email button (left of date) */}
+                        {canSendTuition && (
+                            <button
+                                type="button"
+                                className="cd-btn"
+                                onClick={sendTuitionEmail}
+                                disabled={
+                                    sendingTuition ||
+                                    heldCount < TUITION_THRESHOLD
+                                }
+                                title={
+                                    heldCount < TUITION_THRESHOLD
+                                        ? `Available after ${TUITION_THRESHOLD} sessions (current: ${heldCount})`
+                                        : "Send tuition email to all students"
+                                }
+                                style={
+                                    sendingTuition ||
+                                    heldCount < TUITION_THRESHOLD
+                                        ? {
+                                              opacity: 0.6,
+                                              cursor: "not-allowed",
+                                          }
+                                        : undefined
+                                }
+                            >
+                                {sendingTuition
+                                    ? "Sending..."
+                                    : "Send tuition email"}
+                            </button>
+                        )}
+
                         <div className="cd-date">
                             <span className="cd-date-label">Date</span>
 
@@ -602,13 +693,8 @@ export default function ClassDetailPage() {
 
                         <tbody>
                             {students.map((s, idx) => {
-                                const studentId =
-                                    s._id ||
-                                    s.id ||
-                                    s.email ||
-                                    s.fullName ||
-                                    s.name ||
-                                    String(idx);
+                                const studentId = getStudentId(s);
+                                if (!studentId) return null;
 
                                 return (
                                     <tr key={studentId}>
@@ -727,13 +813,8 @@ export default function ClassDetailPage() {
                 {/* ===== CARD LIST (mobile) ===== */}
                 <div className="cd-cards">
                     {students.map((s, idx) => {
-                        const studentId =
-                            s._id ||
-                            s.id ||
-                            s.email ||
-                            s.fullName ||
-                            s.name ||
-                            String(idx);
+                        const studentId = getStudentId(s);
+                        if (!studentId) return null;
 
                         const name = s.fullName || s.name || "—";
 

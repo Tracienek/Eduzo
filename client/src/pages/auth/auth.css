@@ -276,6 +276,11 @@ input::-webkit-credentials-auto-fill-button {
     pointer-events: none;
 }
 
+/* reserve space when error is visible */
+.auth-field:has(.auth-error.show) {
+    padding-bottom: 22px;
+}
+
 /* iPad + tablets */
 @media (min-width: 481px) and (max-width: 1024px) {
     .auth-page {

@@ -40,5 +40,6 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/v1/api/notifications", require("./routes/notification.routes"));
 app.use("/v1/api/feedback", require("./routes/feedback.routes"));
 app.use("/v1/api/classes", attendanceRoutes);
+app.use("/api", require("./routes"));
 
 module.exports = app;

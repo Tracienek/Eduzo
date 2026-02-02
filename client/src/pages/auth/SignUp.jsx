@@ -7,7 +7,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 
 const unwrap = (res) => {
     const root = res?.data ?? res;
-    return root?.metadata ?? root?.data ?? root;
+    return root?.data ?? root;
 };
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -17,15 +17,27 @@ export default function SignUp() {
     const { loadUserMe } = useAuth();
 
     const [showPassword, setShowPassword] = useState(false);
-    const [errors, setErrors] = useState({});
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
+    const [errors, setErrors] = useState({});
     const [inputs, setInputs] = useState({
         email: "",
         fullName: "",
         password: "",
         confirmPassword: "",
     });
+
+    const focusFirstError = (errs) => {
+        const order = ["fullName", "email", "password", "confirmPassword"];
+        const firstKey = order.find((k) => errs[k]);
+        if (!firstKey) return;
+
+        const el = document.querySelector(`[name="${firstKey}"]`);
+        if (el) {
+            el.focus();
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    };
 
     const onChange = (e) => {
         const { name, value } = e.target;
@@ -57,15 +69,16 @@ export default function SignUp() {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitting(true);
+        if (isLoading) return;
 
         const validationErrors = validateInputs();
         if (Object.keys(validationErrors).length) {
             setErrors(validationErrors);
-            setIsSubmitting(false);
+            focusFirstError(validationErrors);
             return;
         }
 
+        setIsLoading(true);
         try {
             const payload = {
                 email: inputs.email.trim().toLowerCase(),
@@ -79,19 +92,20 @@ export default function SignUp() {
             const token = data?.accessToken || data?.token;
             if (token) tokenStore.set(token);
 
-            // ✅ this is what makes UI update immediately (no reload)
             await loadUserMe();
-
             navigate("/workspace");
         } catch (err) {
-            setErrors({
-                serverError:
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    "Registration failed. Try again.",
-            });
+            // put server error near email by default (common case: email exists)
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Registration failed. Try again.";
+
+            const errs = { email: msg };
+            setErrors(errs);
+            focusFirstError(errs);
         } finally {
-            setIsSubmitting(false);
+            setIsLoading(false);
         }
     };
 
@@ -101,6 +115,7 @@ export default function SignUp() {
             <p className="auth-subtitle">Create your center account</p>
 
             <form className="auth-form" onSubmit={onSubmit}>
+                {/* FULL NAME */}
                 <div className="auth-field">
                     <label className="auth-label">Full Name</label>
                     <div className="auth-input-wrap">
@@ -113,21 +128,19 @@ export default function SignUp() {
                             placeholder="Enter your full name"
                             value={inputs.fullName}
                             onChange={onChange}
-                            className={`auth-input ${
-                                errors.fullName ? "error" : ""
-                            }`}
+                            className={`auth-input ${errors.fullName ? "error" : ""}`}
                             autoComplete="name"
+                            disabled={isLoading}
                         />
                     </div>
                     <p
-                        className={`auth-error ${
-                            errors.fullName ? "show" : ""
-                        }`}
+                        className={`auth-error ${errors.fullName ? "show" : ""}`}
                     >
                         {errors.fullName}
                     </p>
                 </div>
 
+                {/* EMAIL */}
                 <div className="auth-field">
                     <label className="auth-label">Email</label>
                     <div className="auth-input-wrap">
@@ -140,10 +153,9 @@ export default function SignUp() {
                             placeholder="Enter your email"
                             value={inputs.email}
                             onChange={onChange}
-                            className={`auth-input ${
-                                errors.email ? "error" : ""
-                            }`}
+                            className={`auth-input ${errors.email ? "error" : ""}`}
                             autoComplete="email"
+                            disabled={isLoading}
                         />
                     </div>
                     <p className={`auth-error ${errors.email ? "show" : ""}`}>
@@ -151,6 +163,7 @@ export default function SignUp() {
                     </p>
                 </div>
 
+                {/* PASSWORD */}
                 <div className="auth-field">
                     <label className="auth-label">Password</label>
                     <div className="auth-input-wrap">
@@ -163,16 +176,16 @@ export default function SignUp() {
                             placeholder="Enter your password"
                             value={inputs.password}
                             onChange={onChange}
-                            className={`auth-input ${
-                                errors.password ? "error" : ""
-                            }`}
+                            className={`auth-input ${errors.password ? "error" : ""}`}
                             autoComplete="new-password"
+                            disabled={isLoading}
                         />
                         <button
                             type="button"
                             className="auth-eye-btn"
                             onClick={() => setShowPassword((v) => !v)}
                             aria-label="Toggle password visibility"
+                            disabled={isLoading}
                         >
                             {showPassword ? (
                                 <i className="fa-solid fa-eye-slash" />
@@ -182,14 +195,13 @@ export default function SignUp() {
                         </button>
                     </div>
                     <p
-                        className={`auth-error ${
-                            errors.password ? "show" : ""
-                        }`}
+                        className={`auth-error ${errors.password ? "show" : ""}`}
                     >
                         {errors.password}
                     </p>
                 </div>
 
+                {/* CONFIRM PASSWORD */}
                 <div className="auth-field">
                     <label className="auth-label">Confirm Password</label>
                     <div className="auth-input-wrap">
@@ -206,27 +218,18 @@ export default function SignUp() {
                                 errors.confirmPassword ? "error" : ""
                             }`}
                             autoComplete="new-password"
+                            disabled={isLoading}
                         />
                     </div>
                     <p
-                        className={`auth-error ${
-                            errors.confirmPassword ? "show" : ""
-                        }`}
+                        className={`auth-error ${errors.confirmPassword ? "show" : ""}`}
                     >
                         {errors.confirmPassword}
                     </p>
                 </div>
 
-                {errors.serverError && (
-                    <p className="auth-error show">{errors.serverError}</p>
-                )}
-
-                <button
-                    className="auth-btn"
-                    type="submit"
-                    disabled={isSubmitting}
-                >
-                    {isSubmitting ? "Signing Up..." : "Sign Up"}
+                <button className="auth-btn" type="submit" disabled={isLoading}>
+                    {isLoading ? "Signing Up..." : "Sign Up"}
                 </button>
 
                 <div className="auth-footer">

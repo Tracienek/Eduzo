@@ -5,14 +5,29 @@ import { useAuth } from "../../context/auth/AuthContext";
 import "./auth.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 export default function SignIn() {
-    const nav = useNavigate();
+    const navigate = useNavigate();
     const { login } = useAuth();
 
     const [showPassword, setShowPassword] = useState(false);
-    const [isSubmitLoginLoading, setIsSubmitLoginLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
     const [errors, setErrors] = useState({});
     const [inputs, setInputs] = useState({ email: "", password: "" });
+
+    const focusFirstError = (errs) => {
+        const order = ["email", "password"];
+        const firstKey = order.find((k) => errs[k]);
+        if (!firstKey) return;
+
+        const el = document.querySelector(`[name="${firstKey}"]`);
+        if (el) {
+            el.focus();
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+    };
 
     const onChange = (e) => {
         const { name, value } = e.target;
@@ -22,22 +37,28 @@ export default function SignIn() {
 
     const validateInputs = () => {
         const errs = {};
-        if (!inputs.email.trim()) errs.email = "Email is required";
-        if (!inputs.password.trim()) errs.password = "Password is required";
+        const email = inputs.email.trim().toLowerCase();
+
+        if (!email) errs.email = "Email is required";
+        else if (!isValidEmail(email)) errs.email = "Invalid email format";
+
+        if (!inputs.password) errs.password = "Password is required";
+
         return errs;
     };
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        setIsSubmitLoginLoading(true);
+        if (isLoading) return;
 
         const validationErrors = validateInputs();
         if (Object.keys(validationErrors).length) {
             setErrors(validationErrors);
-            setIsSubmitLoginLoading(false);
+            focusFirstError(validationErrors);
             return;
         }
 
+        setIsLoading(true);
         try {
             const email = inputs.email.trim().toLowerCase();
             const password = inputs.password;
@@ -45,26 +66,26 @@ export default function SignIn() {
             const result = await login(email, password);
 
             if (!result?.success) {
-                setErrors({ serverError: "Invalid email or password" });
+                // Show a popup near password field + highlight it
+                const errs = { password: "Invalid email or password" };
+                setErrors(errs);
+                focusFirstError(errs);
                 return;
             }
 
-            // Optional: force teacher to change password (if you want)
-            // if (result.user?.mustChangePassword) {
-            //     nav("/workspace/profile?forceChange=1");
-            //     return;
-            // }
-
-            nav("/workspace");
+            navigate("/workspace");
         } catch (err) {
-            setErrors({
-                serverError:
-                    err?.response?.data?.message ||
-                    err?.message ||
-                    "Invalid email or password",
-            });
+            // If backend returns message, show it near password
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                "Invalid email or password";
+
+            const errs = { password: msg };
+            setErrors(errs);
+            focusFirstError(errs);
         } finally {
-            setIsSubmitLoginLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -74,6 +95,7 @@ export default function SignIn() {
             <p className="auth-subtitle">Great to see you again</p>
 
             <form className="auth-form" onSubmit={onSubmit}>
+                {/* EMAIL */}
                 <div className="auth-field">
                     <label className="auth-label">Email</label>
                     <div className="auth-input-wrap">
@@ -86,7 +108,9 @@ export default function SignIn() {
                             placeholder="Enter your email"
                             value={inputs.email}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${errors.email ? "error" : ""}`}
+                            autoComplete="email"
+                            disabled={isLoading}
                         />
                     </div>
                     <p className={`auth-error ${errors.email ? "show" : ""}`}>
@@ -94,6 +118,7 @@ export default function SignIn() {
                     </p>
                 </div>
 
+                {/* PASSWORD */}
                 <div className="auth-field">
                     <label className="auth-label">Password</label>
                     <div className="auth-input-wrap">
@@ -106,13 +131,16 @@ export default function SignIn() {
                             placeholder="Enter your password"
                             value={inputs.password}
                             onChange={onChange}
-                            className="auth-input"
+                            className={`auth-input ${errors.password ? "error" : ""}`}
+                            autoComplete="current-password"
+                            disabled={isLoading}
                         />
                         <button
                             type="button"
                             className="auth-eye-btn"
                             onClick={() => setShowPassword((v) => !v)}
                             aria-label="Toggle password visibility"
+                            disabled={isLoading}
                         >
                             {showPassword ? (
                                 <i className="fa-solid fa-eye-slash" />
@@ -122,32 +150,21 @@ export default function SignIn() {
                         </button>
                     </div>
                     <p
-                        className={`auth-error ${
-                            errors.password ? "show" : ""
-                        }`}
+                        className={`auth-error ${errors.password ? "show" : ""}`}
                     >
                         {errors.password}
                     </p>
                 </div>
 
-                {errors.serverError && (
-                    <p className="auth-error show">{errors.serverError}</p>
-                )}
-
                 <div className="auth-row">
                     <span />
-                    {/* If you haven't built this page yet, keep "#" or remove */}
                     <Link className="auth-link" to="/auth/forgot-password">
                         Forgot your password?
                     </Link>
                 </div>
 
-                <button
-                    className="auth-btn"
-                    type="submit"
-                    disabled={isSubmitLoginLoading}
-                >
-                    {isSubmitLoginLoading ? "Signing In..." : "Sign In"}
+                <button className="auth-btn" type="submit" disabled={isLoading}>
+                    {isLoading ? "Signing In..." : "Sign In"}
                 </button>
 
                 <div className="auth-footer">

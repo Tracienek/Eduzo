@@ -24,4 +24,7 @@ router.get("/:id/notes", authMiddleware, noteCtrl.listByClass);
 // router.get("/:id/notes/:noteId", authMiddleware, noteCtrl.getById);
 router.post("/:id/notes", authMiddleware, noteCtrl.create);
 
+router.get("/:id/sessions/summary", authMiddleware, ctrl.getSessionSummary);
+router.post("/:id/tuition/send", authMiddleware, ctrl.sendTuitionEmails);
+
 module.exports = router;
